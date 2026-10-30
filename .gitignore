@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+data/raw/
+.env
+.DS_Store
+.venv-gnn/
+logs/

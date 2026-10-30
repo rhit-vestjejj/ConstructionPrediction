@@ -1,0 +1,12 @@
+numpy
+pandas
+pyarrow
+scipy
+scikit-learn
+xgboost==2.1.4  # 3.x needs a newer libomp than conda ships on this machine
+lightgbm
+plotly
+requests
+matplotlib
+playwright
+h3

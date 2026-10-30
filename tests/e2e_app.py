@@ -1,0 +1,178 @@
+"""End-to-end check of outputs/forecast_app.html in real Chrome: exercises every control and a real map click.
+Run:  .venv/bin/python tests/e2e_app.py [url]   (default: the built file)"""
+import sys
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+ROOT = Path(__file__).resolve().parent.parent
+URL = sys.argv[1] if len(sys.argv) > 1 else f"file://{ROOT}/outputs/forecast_app.html"
+SHOTS = ROOT / "outputs" / "e2e"
+SHOTS.mkdir(exist_ok=True, parents=True)
+fails, errs = [], []
+
+
+def check(name, ok, detail=""):
+    print(("PASS " if ok else "FAIL ") + name + (f"  [{detail}]" if detail and not ok else ""))
+    if not ok:
+        fails.append(name)
+
+
+with sync_playwright() as p:
+    b = p.chromium.launch(channel="chrome", headless=True)
+    pg = b.new_page(viewport={"width": 1500, "height": 950})
+    pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
+    pg.goto(URL)
+    pg.wait_for_selector(".choroplethlayer path", timeout=30000)
+    n = lambda: pg.locator(".choroplethlayer path").count()
+    check("initial map renders", n() > 500, n())
+
+    def counties_click():
+        """Real mouse click on a county path near the middle of the map."""
+        pg.locator(".choroplethlayer path").nth(n() // 2).click(force=True)
+        pg.wait_for_timeout(600)
+        return pg.inner_text("#detail")
+
+    for cat in ["all", "com", "inf", "res", "dc", "ind", "wh"]:
+        pg.select_option("#cat", cat)
+        pg.wait_for_timeout(900)
+        check(f"category {cat} draws", pg.locator("#mapnote .banner").count() >= 0 and not errs, errs[-1:] )
+        if cat in ("all", "com", "inf", "res", "dc"):
+            txt = counties_click()
+            check(f"{cat}: click shows county detail", "FIPS" in txt and "Click a county" not in txt, txt[:60])
+
+    pg.select_option("#cat", "res")
+    pg.wait_for_timeout(500)
+    for h in ["1", "2", "3"]:
+        pg.select_option("#horizon", h)
+        pg.wait_for_timeout(500)
+        check(f"residential horizon {h}y", "Forecast for" in pg.inner_text("#legend"), pg.inner_text("#legend")[:80])
+    pg.click('#mode button[data-v="backtest"]')
+    pg.wait_for_timeout(700)
+    opts = pg.locator("#origin option").count()
+    check("backtest offers origin years", opts >= 2, opts)
+    pg.select_option("#origin", index=opts - 1)  # most recent year: has the top-10% (walk-forward) backtest
+    pg.wait_for_timeout(500)
+    check("top-10% views offered for recent backtest year", pg.locator('#view option[value="actual_top"]').count() == 1)
+    pg.select_option("#origin", index=0)  # oldest year: top-10% views must be hidden, not broken
+    pg.wait_for_timeout(500)
+    check("no top-10% views for years without walk-forward data", pg.locator('#view option[value="actual_top"]').count() == 0 or "incl. top-10%" in pg.locator("#origin option").first.inner_text())
+    pg.select_option("#origin", index=opts - 1)
+    pg.wait_for_timeout(500)
+    check("backtest legend", "Backtest" in pg.inner_text("#legend"), pg.inner_text("#legend")[:80])
+    for v in ["surge", "actual_surge", "top", "actual_top", "prob", "growth", "disagree", "actual"]:
+        pg.select_option("#view", v)
+        pg.wait_for_timeout(500)
+        check(f"backtest view {v}", n() > 300, n())
+    for m in ["best", "ensemble", "xgboost", "lightgbm", "random_forest", "baseline_persistence"]:
+        pg.select_option("#model", m)
+        pg.wait_for_timeout(400)
+        check(f"backtest model {m}", n() > 300, n())
+    check("default view is the top-10% target", pg.input_value("#view") in ("top", "prob", "growth", "disagree", "actual", "actual_top"))
+    for tab in ["compare", "top", "feat", "valid"]:
+        pg.click(f'#tabs button[data-k="{tab}"]')
+        pg.wait_for_timeout(500)
+        check(f"tab {tab} has content", len(pg.inner_text("#panel")) > 40, pg.inner_text("#panel")[:50])
+    pg.click('#mode button[data-v="forecast"]')
+    pg.select_option("#cat", "dc")
+    pg.wait_for_timeout(700)
+    check("data center default view is the timed forecast", pg.input_value("#view") == "timed", pg.input_value("#view"))
+    pg.locator(".choroplethlayer path").nth(n() // 2).click(force=True)
+    pg.wait_for_timeout(500)
+    check("dc click shows new-project chance", "NEW data center project" in pg.inner_text("#detail"), pg.inner_text("#detail")[:80])
+    pg.click('#mode button[data-v="backtest"]')
+    pg.wait_for_timeout(700)
+    check("dc backtest years", pg.locator("#origin option").count() == 5, pg.locator("#origin option").count())
+    for v in ["timed", "actual_timed"]:
+        pg.select_option("#view", v)
+        pg.wait_for_timeout(500)
+        check(f"dc backtest view {v}", n() > 1000, n())
+    pg.click('#mode button[data-v="forecast"]')
+    pg.wait_for_timeout(600)
+    for v in ["timed", "like", "pct", "white", "count", "disagree"]:
+        pg.select_option("#view", v)
+        pg.wait_for_timeout(400)
+        check(f"dc view {v}", n() > 300, n())
+    # ---- scenario sliders (data centers)
+    pg.select_option("#view", "timed")
+    pg.wait_for_timeout(400)
+    check("scenario sliders shown", pg.locator("#s_capex").count() == 1)
+    pg.locator("#s_elec").fill("0.2")
+    pg.wait_for_timeout(700)
+    check("moving a slider switches to the difference view", pg.input_value("#view") == "scen_diff", pg.input_value("#view"))
+    check("legend reports scenario totals", "scenario" in pg.inner_text("#legend"), pg.inner_text("#legend")[:120])
+    pg.locator("#s_capex").fill("0.5")
+    pg.wait_for_timeout(700)
+    check("slider survives redraw", pg.locator("#s_capex").count() == 1 and pg.input_value("#s_capex") == "0.5", pg.input_value("#s_capex"))
+    pg.click('#tabs button[data-k="dcscen"]')
+    pg.wait_for_timeout(500)
+    check("scenario table lists counties", "Largest increases" in pg.inner_text("#panel"), pg.inner_text("#panel")[:80])
+    pg.click('#s_scope button[data-v="county"]')
+    pg.wait_for_timeout(500)
+    pg.evaluate("detail('48253')")  # Jones County, TX
+    pg.wait_for_timeout(400)
+    check("county-only scope names the county", "Jones" in pg.inner_text("#s_scopeName"), pg.inner_text("#s_scopeName"))
+    check("county detail shows per-lever sensitivity", "Electricity" in pg.inner_text("#detail") and "pp" in pg.inner_text("#detail"), pg.inner_text("#detail")[:120])
+    changed = pg.evaluate("(()=>{SC.scope='county';S.sel='48253';const s=scenProb();return s.scen.filter((v,i)=>Math.abs(v-s.base[i])>1e-9).length})()")
+    check("county-only scenario changes exactly one county", changed <= 1, changed)
+    pg.click('#s_scope button[data-v="all"]')
+    pg.click("#s_reset")
+    pg.wait_for_timeout(600)
+    check("reset returns to baseline view", pg.input_value("#view") == "timed", pg.input_value("#view"))
+    for tab in ["dctimed", "dcscen", "dcmodel", "emerging", "white", "pipeline", "dccaveats"]:
+        pg.click(f'#tabs button[data-k="{tab}"]')
+        pg.wait_for_timeout(400)
+        check(f"dc tab {tab}", len(pg.inner_text("#panel")) > 40, pg.inner_text("#panel")[:50])
+    # ---- metro H3 cells
+    pg.select_option("#cat", "metro")
+    pg.wait_for_timeout(900)
+    check("metro selector visible", pg.is_visible("#metrosel"))
+    for metro in ["fortworth", "mecklenburg", "columbus"]:
+        pg.select_option("#metrosel", metro)
+        pg.wait_for_timeout(900)
+        hexes = pg.locator(".choroplethlayer path").count()
+        check(f"metro {metro}: hexes drawn", hexes > 200, hexes)
+        pg.locator(".choroplethlayer path").nth(hexes // 2).click(force=True)  # county outlines are drawn first, hexes after
+        pg.wait_for_timeout(500)
+        txt = pg.inner_text("#detail")
+        check(f"metro {metro}: hex click shows cell detail", "H3 cell" in txt and "Probability" in txt, txt[:80])
+    pg.screenshot(path=str(SHOTS / "metro.png"))
+    pg.click('#mode button[data-v="backtest"]')
+    pg.wait_for_timeout(700)
+    check("metro backtest origins", pg.locator("#origin option").count() >= 3, pg.locator("#origin option").count())
+    for v in ["prob", "actual"]:
+        pg.select_option("#view", v)
+        pg.wait_for_timeout(500)
+        check(f"metro backtest view {v}", pg.locator(".choroplethlayer path").count() > 200)
+    for m in ["baseline_recent_history", "xgboost", "ensemble"]:
+        pg.select_option("#model", m)
+        pg.wait_for_timeout(400)
+        check(f"metro backtest model {m}", "Backtest" in pg.inner_text("#legend"))
+    for tab in ["mcompare", "mtop", "mvalid"]:
+        pg.click(f'#tabs button[data-k="{tab}"]')
+        pg.wait_for_timeout(400)
+        check(f"metro tab {tab}", len(pg.inner_text("#panel")) > 60, pg.inner_text("#panel")[:50])
+    pg.click('#mode button[data-v="forecast"]')
+    pg.select_option("#cat", "dc")
+    pg.wait_for_timeout(600)
+    check("leaving metro hides metro selector", not pg.is_visible("#metrosel"))
+    pg.select_option("#cat", "all")
+    pg.wait_for_timeout(700)
+    check("default view is the surge view", pg.input_value("#view") == "surge", pg.input_value("#view"))
+    check("announced projects layer drawn", pg.locator(".scattergeo .point").count() > 50, pg.locator(".scattergeo .point").count())
+    pg.select_option("#cat", "dc")
+    pg.wait_for_timeout(600)
+    pg.check("#dc")
+    pg.wait_for_timeout(500)
+    check("OSM layer toggles", pg.locator(".scattergeo .point").count() > 100, pg.locator(".scattergeo .point").count())
+    pg.screenshot(path=str(SHOTS / "dc.png"))
+    pg.set_viewport_size({"width": 400, "height": 800})
+    pg.wait_for_timeout(600)
+    check("mobile: no horizontal scroll", pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 2"), pg.evaluate("document.documentElement.scrollWidth"))
+    pg.screenshot(path=str(SHOTS / "mobile.png"), full_page=False)
+    b.close()
+
+check("no console/page errors", not errs, "; ".join(errs[:3]))
+print(f"\n{len(fails)} failures" if fails else "\nALL PASSED")
+sys.exit(1 if fails else 0)

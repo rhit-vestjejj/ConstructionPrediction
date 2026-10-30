@@ -1,0 +1,14 @@
+{
+ "all_construction|1": "own+spatial+econ",
+ "all_construction|2": "own+spatial+econ+context",
+ "all_construction|3": "own+spatial+econ+context",
+ "nonres_building|1": "own+spatial+econ+context",
+ "nonres_building|2": "own+spatial+econ+context",
+ "nonres_building|3": "own+spatial+econ+context",
+ "infrastructure|1": "own+spatial+econ",
+ "infrastructure|2": "own+spatial+econ",
+ "infrastructure|3": "own+spatial+econ+context",
+ "residential_permits|1": "own+spatial+econ+context",
+ "residential_permits|2": "own+spatial+econ+context",
+ "residential_permits|3": "own+spatial+econ+context"
+}
