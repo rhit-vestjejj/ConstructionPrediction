@@ -8,8 +8,20 @@
   @media (prefers-color-scheme:dark){:root{--bg:#14181f;--fg:#e8ecf2;--mut:#98a2b3;--line:#2a313c;--card:#1c222b;--acc:#6ea0ff;--warn:#fdb022;--warnbg:#2a2110}}
   *{box-sizing:border-box}[hidden]{display:none!important}.app>*{min-width:0}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
   .app{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;grid-template-rows:auto 1fr auto;min-height:100vh}
-  header{grid-column:1/-1;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header{grid-column:1/-1;padding:10px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   h1{font-size:17px;margin:0}header p{margin:2px 0 0;color:var(--mut);font-size:12px}
+  .views{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px}
+  .views button{border:0;background:none;color:var(--mut);padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}.views button.on{background:var(--bg);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .app[data-page=map] .page,.app[data-page=insights] #stats,.app[data-page=stats] #insights{display:none}
+  .app:not([data-page=map]) aside,.app:not([data-page=map]) main{display:none}
+  .page{grid-column:1/-1;padding:18px 24px 40px;max-width:1180px;width:100%;margin:0 auto}
+  .page h3{font-size:16px;margin:28px 0 4px}.page h3:first-child{margin-top:0}.page .lead{color:var(--mut);margin:0 0 12px;max-width:760px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .tile{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}.tile .k{font-size:12px;color:var(--mut)}.tile .v{font-size:26px;font-weight:650;margin:2px 0}.tile .s{font-size:12px;color:var(--mut)}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  .rank td:first-child{max-width:220px;overflow:hidden;text-overflow:ellipsis}.rank a{color:var(--fg)}
+  .imp{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:4px 10px;font-size:13px;align-items:center}.imp i{display:block;height:8px;border-radius:4px;background:var(--acc)}
+  .guide{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px}.guide p{margin:4px 0}
   aside{padding:12px;background:var(--card);overflow:auto;max-height:calc(100vh - 60px)}
   aside.left{border-right:1px solid var(--line)}aside.right{border-left:1px solid var(--line)}
   h2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:14px 0 6px}h2:first-child{margin-top:0}
@@ -27,42 +39,40 @@
   .drv{margin:2px 0;padding:0;list-style:none}.drv li{display:flex;justify-content:space-between;gap:8px}.drv li>span:last-child{white-space:nowrap}.up{color:#b42318}.dn{color:#175cd3}
   @media (prefers-color-scheme:dark){.up{color:#f97066}.dn{color:#84adff}}
   .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px}
-  .card b.t{display:block;margin-bottom:4px}.mut{color:var(--mut)}.small{font-size:12px}
+  .card b.t{display:block;font-size:15px}.kv{margin:8px 0 4px;font-size:13px}.kv td{padding:3px 0;border:0;white-space:normal;vertical-align:top}.kv td:last-child{text-align:right;padding-left:8px}.kv .sub{display:block;font-size:11.5px;color:var(--mut)}
+  .card h4{font-size:12px;margin:12px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}.mut{color:var(--mut)}.small{font-size:12px}
   main{min-width:0;position:relative}#map{width:100%;height:calc(100vh - 250px);min-height:420px}
   .legend{position:absolute;left:12px;bottom:8px;font-size:12px;color:var(--mut);background:var(--bg);padding:4px 8px;border-radius:6px;border:1px solid var(--line)}
-  footer{grid-column:1/-1;border-top:1px solid var(--line);padding:0 16px 14px}
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
   .tabs button{border:0;background:none;color:var(--mut);padding:8px 10px;font:inherit;cursor:pointer;border-bottom:2px solid transparent}
   .tabs button.on{color:var(--fg);border-color:var(--acc)}
   table{border-collapse:collapse;width:100%;font-size:12.5px}td,th{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
   td:first-child,th:first-child{text-align:left}th{color:var(--mut);font-weight:500}tr.best td{font-weight:600}
   .tw{overflow-x:auto}
-  @media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}header{order:0}aside.left{order:1}main{order:2}aside.right{order:3}footer{order:4}aside{max-height:none}aside.left,aside.right{border:0;border-bottom:1px solid var(--line)}#map{height:48vh;min-height:300px}.legend{position:static;margin:4px 12px}.lens button{min-width:0}.lens button small{display:none}}
+  @media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}header{order:0}aside.left{order:1}main{order:2}aside.right{order:3}.page{order:4;padding:14px 16px 30px}aside{max-height:none}aside.left,aside.right{border:0;border-bottom:1px solid var(--line)}#map{height:48vh;min-height:300px}.legend{position:static;margin:4px 12px}.lens button{min-width:0}.lens button small{display:none}}
 </style></head><body>
-<div class="app">
-<header><h1>Construction forecast map</h1>
-<p>Where construction is now, where it has been heating up, and where it's likely to heat up next, county by county. Forecasts are model estimates, not guarantees. <a href="#accuracy">How accurate is this?</a></p></header>
+<div class="app" data-page="map">
+<header><div><h1>Construction forecast map</h1>
+<p>Where construction is now, where it's heating up, and where it's likely to go next.</p></div>
+<nav class="views" id="pages"><button data-p="map" class="on">Map</button><button data-p="insights">Key takeaways</button><button data-p="stats">How accurate?</button></nav></header>
 
 <aside class="left">
-  <h2>Explore</h2>
-  <label for="cat">What to look at</label><select id="cat"></select>
+  <label for="cat" style="margin-top:0">What to look at</label><select id="cat"></select>
+  <div class="small mut" id="catnote" style="margin-top:4px"></div>
   <div id="metrobox" hidden><label>Metro</label><select id="metrosel"></select></div>
   <label for="view">Map shows</label><select id="view"></select>
   <label for="search">Find a county</label><input id="search" type="search" list="countylist" placeholder="e.g. Maricopa County, AZ" autocomplete="off"><datalist id="countylist"></datalist>
-  <h2>Layers</h2>
+  <h2 style="margin-top:16px">Show on map</h2>
   <label class="chk"><input id="proj" type="checkbox"> Announced data center projects</label>
-  <div class="small mut">915 dated projects from news and public records, at the county center (gray = cancelled or blocked).</div>
-  <label class="chk"><input id="dc" type="checkbox"> Existing data centers (OpenStreetMap)</label>
-  <div id="epochbox" hidden><label class="chk"><input id="epoch" type="checkbox" checked> Frontier AI campuses (Epoch AI)</label>
-  <div class="small mut">About 75 US sites; marker size = planned peak MW.</div></div>
+  <label class="chk"><input id="dc" type="checkbox"> Existing data centers</label>
+  <div id="epochbox" hidden><label class="chk"><input id="epoch" type="checkbox" checked> Large AI campuses</label></div>
   <details class="adv" id="adv"><summary>Advanced settings</summary>
     <label>Mode</label><div class="seg" id="mode"><button data-v="forecast" class="on">Forecast</button><button data-v="backtest">Check past years</button></div>
     <label id="originLbl" hidden>Year to check (the model only saw data before it)</label><select id="origin" hidden></select>
     <label>Forecast horizon</label><select id="horizon"></select>
     <label>Model</label><select id="model"></select>
-    <label>Geographic resolution</label><select id="res" disabled><option>County (prediction resolution)</option></select>
-    <div class="small mut" id="resNote">H3 cells are only used where dated, located permits exist (category "Metro permits"). Elsewhere models predict at county level, and smaller cells would imply precision that doesn't exist.</div>
     <label>Heatmap opacity <span id="opv">85%</span></label><input id="opacity" type="range" min="20" max="100" value="85">
+    <div hidden><select id="res"><option></option></select><div id="resNote"></div></div>
   </details>
 </aside>
 
@@ -79,15 +89,32 @@
   <div class="card small" id="scen"></div></div>
 </aside>
 
-<footer>
-  <h2 id="accuracy" style="margin-top:14px">How accurate is this?</h2>
+<section class="page" id="insights"></section>
+
+<section class="page" id="stats">
+  <h3>How accurate are the forecasts?</h3>
+  <p class="lead">Every model was tested on years it never saw: trained on earlier years, then scored on later ones. These tables show how it did.</p>
+  <div class="guide">
+    <p><b>How to read the numbers</b></p>
+    <p><b>PR-AUC</b> (0 to 1, higher is better): how well the model puts the counties that really surged at the top of its list. Random guessing scores about the <b>base rate</b>, the share of counties that surge in a typical year.</p>
+    <p><b>Precision@100</b> / <b>top 50</b>: of the counties the model rated highest, the share that actually surged or got a project.</p>
+    <p><b>Baseline</b> rows are simple rules of thumb (e.g. "big counties stay big"). A model is only useful if it beats them.</p>
+  </div>
+  <label for="cat2" style="max-width:320px">Showing accuracy for</label><select id="cat2" style="max-width:320px;margin-bottom:12px"></select>
   <div class="tabs" id="tabs"></div><div id="panel"></div>
-</footer>
+</section>
 </div>
 
 <script>
 const D=__DATA__, GEO=__GEO__;
 const $=id=>document.getElementById(id), fmt=new Intl.NumberFormat();
+// Level fix for the data center forecast. The calibrated chances reproduce the 2021-25 average (~80 counties a year),
+// but activity has grown fast (39 counties in 2021, 163 in 2025), so the raw level badly under-counts. Rescale on the
+// hazard scale so the expected number of counties matches the latest full year. The ranking (where) is unchanged.
+const DC_LAST=Math.max(...Object.keys(D.dct.bt).map(Number)),DC_LIVE=p=>!(p.status&&/cancel|block|withdr|denied/i.test(p.status));
+const DC_LEVEL=new Set(D.projects.filter(p=>p.year===DC_LAST&&DC_LIVE(p)).map(p=>p.fips)).size,DC_RAW=D.dct.prob.reduce((a,b)=>a+b,0)/1000;
+(function(){const p=D.dct.prob.map(v=>v/1000),sum=r=>p.reduce((a,x)=>a+1-Math.pow(1-x,r),0);let lo=.01,hi=50;
+  for(let k=0;k<60;k++){const m=(lo+hi)/2;sum(m)<DC_LEVEL?lo=m:hi=m}D.dct.prob=p.map(x=>Math.round((1-Math.pow(1-x,(lo+hi)/2))*1000))})();
 const ST={'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY','72':'PR'};
 const cname=f=>(D.names[f]||f)+(ST[String(f).slice(0,2)]?', '+ST[String(f).slice(0,2)]:'');
 // plain-English names for model inputs shown as "what drives this forecast"
@@ -98,20 +125,22 @@ const FEAT={lu_0:'Activity in the latest year',lu_1:'Activity 1 year earlier',lu
   risk_score:'Natural hazard risk',eal_log:'Expected disaster losses',resl_score:'Community resilience',risk_hrcn:'Hurricane risk',risk_wfir:'Wildfire risk',risk_trnd:'Tornado risk',risk_erqk:'Earthquake risk',risk_cfld:'Coastal flood risk',risk_drgt:'Drought risk',
   pipe_cum:'Data center projects so far',pipe_recent:'Recent data center projects',jobs518:'Data-processing & hosting jobs',estabs518:'Data-processing & hosting firms',jobs493:'Warehousing jobs',jobs23:'Construction jobs',jobs2362:'Nonresidential building jobs',pay23:'Construction pay',
   g23:'Construction job growth',g2362:'Nonresidential building job growth',units23:'Housing permits',elec_price:'Industrial electricity price',ind_price_min:'Cheapest industrial electricity nearby',nbr_dc:'Neighbors with data centers',nbr_jobs23:'Neighbors\' construction jobs',dist_dc_km:'Distance to nearest data center',
+  proj_cum:'Data center projects already in the county',proj_recent:'Projects in the last 2 years',yrs_since_proj:'Years since the last project',nbr_proj_cum:'Projects in neighboring counties',nbr_proj_recent:'Recent projects next door',
+  state_proj_recent:'Recent projects elsewhere in the state',units:'Housing permits',g518:'Growth in hosting jobs',ind_price:'Industrial electricity price',n_utilities:'Number of electric utilities',mw_total:'Power plant capacity in the county',
   mw_50km:'Power plants within 50 km',mw_150km:'Power plants within 150 km',mw_gas:'Gas power capacity',mw_windsolar:'Wind & solar capacity',mw_storage:'Battery storage capacity',max_grid_kv:'Highest transmission voltage',kv230_dist_km:'Distance to a 230 kV line',kv345_dist_km:'Distance to a 345 kV line',hdd:'Heating degree days',cdd:'Cooling degree days'};
 const drivers=L=>'<ul class="drv">'+L.map(d=>`<li title="${d[0]}: ${d[1]}"><span>${FEAT[d[0]]||d[0]}</span>${d[1]>0?'<span class="up">&#9650; raises</span>':'<span class="dn">&#9660; lowers</span>'}</li>`).join('')+'</ul>';
 const HEAT=[[0,'#fff5eb'],[.3,'#fdbe85'],[.6,'#f16913'],[1,'#7f2704']];  // observed activity (warm); forecasts stay blue
 const DIV=[[0,'#2166ac'],[.5,'#f2f2f0'],[1,'#b2182b']];  // falling = blue, flat = gray, rising = red
 const LENS_OF=v=>['now','count','hist'].includes(v)?'now':['trend','dctrend','mtrend'].includes(v)?'trend':'next';
 const CATS=[
- {id:'all',label:'All construction',target:'all_construction'},
- {id:'dc',label:'Data centers',dc:true,note:'Default view: chance a county gets a NEW data center project next year, learned from 915 dated projects (announcements, rezonings, abatements, construction starts) compiled from news and public records, retrained yearly and backtested on 2021-2025. Other views: siting propensity (which counties resemble places that host data centers today).'},
+ {id:'all',label:'All construction',target:'all_construction',short:'Measured by construction jobs in each county (BLS).'},
+ {id:'dc',label:'Data centers',dc:true,short:'Built from 915 dated data center projects found in news and public records.',note:'Default view: chance a county gets a NEW data center project next year, learned from 915 dated projects (announcements, rezonings, abatements, construction starts) compiled from news and public records, retrained yearly and backtested on 2021-2025. Other views: siting propensity (which counties resemble places that host data centers today).'},
  {id:'ind',label:'Industrial & manufacturing',why:'Forecast model unavailable: no historical industrial construction-start labels. Commercial/nonresidential building jobs (a broader proxy) are available under "Commercial".'},
  {id:'wh',label:'Warehouses & logistics',why:'Forecast model unavailable: no historical warehouse construction-start labels.'},
- {id:'com',label:'Commercial & nonresidential building',target:'nonres_building',note:'Proxy: BLS jobs in nonresidential building construction (commercial, industrial and institutional together). Many small counties are suppressed.'},
- {id:'res',label:'Residential',target:'residential_permits',note:'Proxy: Census permitted housing units (35 years of data).'},
- {id:'inf',label:'Infrastructure & civil engineering',target:'infrastructure',note:'Proxy: BLS jobs in heavy and civil engineering construction.'},
- {id:'metro',label:'Metro permits: H3 cells',metro:true,note:'Cell-level forecast (~5 km² hexagons): will a new non-residential building permit of $1M+ be filed in this cell next year? Only Fort Worth, Charlotte/Mecklenburg and Columbus publish dated, located permits, so nothing else is modeled. Commercial, warehouse and industrial permits are pooled (too few of each to model separately).'}];
+ {id:'com',label:'Commercial & nonresidential building',target:'nonres_building',short:'Measured by commercial, industrial and institutional building jobs (BLS).',note:'Proxy: BLS jobs in nonresidential building construction (commercial, industrial and institutional together). Many small counties are suppressed.'},
+ {id:'res',label:'Residential',target:'residential_permits',short:'Measured by new housing units permitted (Census).',note:'Proxy: Census permitted housing units (35 years of data).'},
+ {id:'inf',label:'Infrastructure & civil engineering',target:'infrastructure',short:'Measured by road, utility and civil construction jobs (BLS).',note:'Proxy: BLS jobs in heavy and civil engineering construction.'},
+ {id:'metro',label:'Metro permits: H3 cells',metro:true,short:'Chance of a new $1M+ commercial permit in each ~5 km² hexagon. Only Fort Worth, Charlotte and Columbus publish this data.',note:'Cell-level forecast (~5 km² hexagons): will a new non-residential building permit of $1M+ be filed in this cell next year? Only Fort Worth, Charlotte/Mecklenburg and Columbus publish dated, located permits, so nothing else is modeled. Commercial, warehouse and industrial permits are pooled (too few of each to model separately).'}];
 const MODEL_NAMES={baseline_size:'Baseline: county size',baseline_recent_increase:'Baseline: recent increase',ensemble:'Ensemble (validation-weighted)',xgboost:'XGBoost',lightgbm:'LightGBM',random_forest:'Random Forest',baseline_persistence:'Baseline: hold latest level',baseline_mean3:'Baseline: 3-yr average',best:'Best on validation'};
 const S={mode:'forecast',tab:'compare',sel:null};
 CATS.forEach(c=>$('cat').add(new Option(c.label+(c.target||c.metro?'':c.dc?' (new-project forecast)':' (no forecast)'),c.id)));
@@ -122,7 +151,7 @@ function cat(){return CATS.find(c=>c.id===$('cat').value)}
 function T(){const c=cat();return c.target?D.targets[c.target]:null}
 function setOptions(sel,opts,keep){const cur=sel.value;sel.innerHTML='';opts.forEach(([v,l])=>sel.add(new Option(l,v)));if(keep&&opts.some(o=>o[0]==cur))sel.value=cur}
 function refreshControls(){
-  $('epochbox').hidden=!cat().dc;$('metrobox').hidden=!cat().metro;$('scenbox').hidden=!cat().dc||!D.dcs;
+  $('epochbox').hidden=!cat().dc;$('catnote').textContent=cat().short||'';$('metrobox').hidden=!cat().metro;$('scenbox').hidden=!cat().dc||!D.dcs;
   $('res').options[0].text=cat().metro?'H3 resolution 7 (~5 km² cells)':'County (prediction resolution)';
   $('resNote').textContent=cat().metro?'Predictions here are made per H3 cell from geolocated permits, so the cell is the true prediction resolution.':'H3 cells are only used where dated, located permits exist (category "Metro permits"). Elsewhere models predict at county level, and smaller cells would imply precision that doesn\'t exist.';
   $('selTitle').textContent=cat().metro?'Selected cell':'Selected county';
@@ -206,8 +235,8 @@ function draw(){
   if($('dc').checked)traces.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#f59e0b',line:{width:.6,color:'#fff'}}});
   if($('proj').checked){const pt=projTrace();if(pt)traces.push(pt)}
   const ty=r.origin+r.h;
-  note=c.note?`<div class="banner info">${c.note}</div>`:'';
-  $('legend').innerHTML=(S.mode==='forecast'?`Forecast for ${ty} from data through ${r.origin}`:`Backtest: predicted ${ty} from data through ${r.origin} (out-of-sample ${r.src.split} period)`)+` &middot; ${MODEL_NAMES[r.m]} &middot; counties shown: ${r.src.fips.length.toLocaleString()} (tiny/suppressed counties excluded)`;
+  note='';
+  $('legend').innerHTML=(S.mode==='forecast'?`Forecast for ${ty}, using data through ${r.origin}`:`Backtest: what the model predicted for ${ty} using data through ${r.origin}`)+' &middot; darker = more likely';
   render(traces,note);panel(r);
 }
 /* ---------- observed activity: right now / heating up ---------- */
@@ -229,7 +258,7 @@ function drawHist(op,c,t){
   if($('proj').checked){const pt=projTrace();if(pt)traces.push(pt)}
   $('legend').innerHTML=now?`Right now: ${t.unit} in ${yl}, the latest full year &middot; color is on a log scale`
     :`Heating up: ${yl} compared with the ${span} average &middot; red = rising, blue = falling &middot; counties averaging under ${MIN_BASE} ${t.unit} are left blank`;
-  render(traces,c.note?`<div class="banner info">${c.note}</div>`:'');panel(resolve());
+  render(traces,'');panel(resolve());
 }
 function render(traces,note,geoX){
   const dark=matchMedia('(prefers-color-scheme:dark)').matches;
@@ -274,21 +303,25 @@ function drawDC(op){
   if($('epoch').checked){const m=dcMarkers();if(m)tr.push(m)}
   $('legend').innerHTML=v==='count'?'Right now: data centers mapped in OpenStreetMap (coverage is uneven; small sites are included)'
     :v==='dctrend'?`Heating up: data center projects announced in ${PY-1}-${PY} (${PY} so far), from news and public records &middot; cancelled or blocked projects excluded`
-    :'Siting propensity from county economics, geography and existing clusters &middot; out-of-fold scores (each county scored by a model that never saw its Census region) &middot; <b>not a timed forecast</b>';
-  render(tr,`<div class="banner info">${cat().note}</div>`);panel(null);
+    :'How much each county resembles places that already host data centers (not a timing forecast)';
+  render(tr,'');panel(null);
 }
+const kv=rows=>'<table class="kv">'+rows.filter(Boolean).map(([k,v,sub])=>`<tr><td>${k}</td><td><b>${v}</b>${sub?`<span class="sub">${sub}</span>`:''}</td></tr>`).join('')+'</table>';
 function detailDC(f){
-  const i=DI[f];let h=`<b class="t">${cname(f)}</b><span class="mut small">FIPS ${f}</span><br>`;
-  h+=dctLine(f);
-  if(i==null){$('detail').innerHTML=h+'<span class="mut small">Not in the propensity model.</span>';return}
-  const sc=DM.scores,a=['xgboost','lightgbm','random_forest','logistic'].map(k=>sc[k][i]/10);
-  h+=`Likelihood this county hosts a data center: <b>${(DM.like[i]/10).toFixed(0)}%</b> <span class="mut small">(ensemble, calibrated; base rate ${(D.dc_metrics.n_hosts/D.dc_metrics.n_counties*100).toFixed(0)}%)</span><br>Percentile: <b>${(DM.pct[i]/10).toFixed(0)}</b> of ${D.dc_metrics.n_counties} counties<br>`;
-  h+=`Model range: ${Math.min(...a).toFixed(0)}&ndash;${Math.max(...a).toFixed(0)}% <span class="mut small">(4 models; not a confidence interval)</span><br>Existing data centers (OSM): <b>${DM.n_dc[i]}</b><br>`;
-  if(DM.ws[i])h+='<b style="color:var(--warn)">White space</b>: top-5% profile with no known site.<br>';
+  const i=DI[f],r=dctData(),j=r.fips.indexOf(f);
+  let h=`<b class="t">${cname(f)}</b><span class="mut small">FIPS ${f} &middot; data centers</span>`;
+  h+=kv([j>=0&&[`Chance of a new project in ${r.year}`,(r.prob[j]*100).toFixed(0)+'%',`typical county: about ${(DC_LEVEL/D.dct.fips.length*100).toFixed(0)}%`],
+    r.bt&&j>=0&&[`What actually happened in ${r.year}`,r.y[j]?'new project':'no project'],
+    [`Projects announced ${PY-1}-${PY}`,RECENT[f]||0,`${PY} so far`],
+    i!=null&&['Existing data centers',DM.n_dc[i]],
+    i!=null&&['Siting score',(DM.like[i]/10).toFixed(0)+'%',`how much it resembles data center counties (top ${Math.max(1,100-Math.round(DM.pct[i]/10))}%)`]]);
+  if(i!=null&&DM.ws[i])h+='<div class="small" style="color:var(--warn)">White space: looks like a data center county but has none yet.</div>';
+  h+=sensLine(f);
+  const pj=D.projects.filter(p=>p.fips===f).sort((a,b)=>b.year-a.year);
+  if(pj.length)h+=`<h4>Known projects (${pj.length})</h4><div class="small">`+pj.slice(0,6).map(p=>`${p.year}: ${p.name||'project'}${LIVE(p)?'':' <i>(cancelled/blocked)</i>'}${p.source&&p.source.startsWith('http')?` <a href="${p.source}" target="_blank" rel="noopener">source</a>`:''}`).join('<br>')+(pj.length>6?`<br><span class="mut">and ${pj.length-6} more</span>`:'')+'</div>';
   const sites=D.epoch_sites.filter(s=>s.fips===f);
-  if(sites.length)h+='<div class="small" style="margin-top:6px"><b>Epoch frontier campuses</b><br>'+sites.map(s=>`${s.name} (${s.owner}): ${s.peak_mw?s.peak_mw+' MW planned peak, ':''}from ${s.first||'n/a'}`).join('<br>')+'</div>';
-  h+=`<div class="small" style="margin-top:6px"><b>Why the siting score is what it is</b>`+drivers(DM.drivers[i])+'</div>';
-  h+='<div class="small mut" style="margin-top:6px">Not modeled: interconnection queue, current fiber, land, water, incentives. Power plants, grid distance, climate and hazards are included but added little.</div>';
+  if(sites.length)h+='<h4>Large AI campuses</h4><div class="small">'+sites.map(s=>`${s.name} (${s.owner})${s.peak_mw?': '+fmt.format(s.peak_mw)+' MW planned':''}`).join('<br>')+'</div>';
+  if(i!=null)h+=`<h4>Why the siting score is what it is</h4><div class="small">`+drivers(DM.drivers[i])+'</div>';
   $('detail').innerHTML=h;
 }
 function panelDC(){
@@ -323,11 +356,13 @@ function panelDC(){
     el.innerHTML=`<p class="small mut">Dated frontier AI campuses from Epoch AI (CC-BY 4.0): milestones come from satellite and permit tracking, and dates after today are projections. Only ~${D.epoch_sites.length} US sites, so this is a pipeline view, not a training set.</p><div class="tw"><table><tr><th>Site</th><th>Owner</th><th>Current MW</th><th>Planned peak MW</th><th>First milestone</th><th>Timeline to</th><th>Location</th></tr>`+
       rows.map(s=>`<tr><td>${s.name}</td><td>${s.owner}</td><td>${s.mw_now??'-'}</td><td>${s.peak_mw??'-'}</td><td>${s.first||'-'}</td><td>${s.last}</td><td>${s.loc}</td></tr>`).join('')+'</table></div>';
   }else{
-    el.innerHTML=`<p class="small mut"><b>What this is.</b> A siting-propensity model: how much a county's economics, geography and existing clusters resemble counties that host data centers today. It is <b>not</b> a forecast of construction timing or volume.</p>
-      <p class="small mut"><b>Why not a timed forecast?</b> No free dataset of dated data center construction starts exists at the scale needed (about 75 dated US campuses from Epoch AI). A time-based model needs several hundred to 1,000+ dated projects.</p>
-      <p class="small mut"><b>Inputs tested.</b> Beyond jobs and permits: ACS population/income/housing (2023), EIA-860 power plants and EIA-861 industrial electricity prices (2023), distance to high-voltage lines (HIFLD, ~2014 vintage, stale), NOAA cooling/heating degree days and FEMA hazard scores. None of them raised accuracy noticeably: cross-validation ROC-AUC stays about 0.88-0.89, mostly because county size already explains most of the signal. <b>Still missing:</b> utility interconnection queues, current fiber, water, land and incentives. The OSM label itself is noisy. The "data-processing jobs" feature (NAICS 518) partly measures data centers themselves, so it is close to circular with the label.</p>
-      <p class="small mut"><b>Label noise.</b> OpenStreetMap coverage is uneven and counts small colocation and enterprise sites alongside hyperscale campuses. Epoch locations are approximate where only a ZIP code (${D.epoch_sites.filter(s=>s.loc==='zip').length} sites) or a manual county (${D.epoch_sites.filter(s=>s.loc==='manual').length}) was available.</p>
-      <p class="small mut"><b>Feature importance (XGBoost gain)</b>: `+Object.entries(D.dc_metrics.importance).slice(0,8).map(([k,v])=>k+' '+v).join(', ')+'.</p>';
+    const M=D.dct.metrics.find(x=>x.model===D.dct.chosen)||D.dct.metrics[0],B=D.dct.metrics.find(x=>x.model==='baseline_prior_projects')||{};
+    el.innerHTML=`<p><b>The main forecast: where will new data center projects show up next year?</b> The "Next" map predicts, for every county, the chance of a new data center project in ${D.dct.year}: an announcement, rezoning, tax abatement or construction start, the first public sign that one is coming.</p>
+      <p class="small"><b>How it learned.</b> From ${fmt.format(D.projects.length)} dated projects (2016 onward) found in news and public records, plus each county's jobs, income, population, power, land and tax data. Every year it is retrained on everything known up to then and asked about the following year, exactly as it is used today.</p>
+      <p class="small"><b>How good is it?</b> Tested on 2021-2025, years it never saw: of the 50 counties it rated most likely each year, about <b>${Math.round(M.test_precision_top50*50)}</b> got a new project, against about ${(M.test_base_rate*50).toFixed(1)} if picked at random (${(M.test_precision_top50/M.test_base_rate).toFixed(0)}&times; better). Simply watching counties that already have projects catches about ${Math.round((B.test_precision_top50||0)*50)}; the model's real edge is spotting <b>new</b> markets.</p>
+      <p class="small"><b>Overall level.</b> On its own the model expects about ${Math.round(DC_RAW)} counties a year, the 2021-2025 average, but activity has grown fast (${DC_LEVEL} counties in ${DC_LAST}). So the chances on the map are scaled up to match ${DC_LAST}; the order of counties is the model's own.</p>
+      <p class="small"><b>What it can't tell you.</b> When construction starts, how big a project is, or who builds it. Many projects are only reported by year, so it predicts by year, not month. The project list comes from news, so places with less coverage are undercounted.</p>
+      <p class="small mut"><b>The "siting score" views</b> are a separate, simpler model: how much a county resembles places that already have data centers (from OpenStreetMap). It has no sense of timing; use it to spot look-alike counties, not to predict when something gets built.</p>`;
   }
 }
 function attachClick(){$('map').on('plotly_click',e=>{const p=e.points[0];if(!p)return;const loc=p.location||(typeof p.customdata==='string'?p.customdata:null);  // project diamonds carry their county
@@ -352,8 +387,8 @@ function drawMetro(op){
   const tr=[{type:'choropleth',geojson:GEO,locations:M.counties,z:M.counties.map(()=>0),colorscale:[[0,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,0)']],showscale:false,hoverinfo:'skip',marker:{line:{width:1,color:dark?'#667085':'#98a2b3'}}},
     {type:'choropleth',geojson:M.geojson,locations:r.cells,z,text,hoverinfo:'text',colorscale:cfg.cs,zmin:cfg.zmin,zmax:cfg.zmax,zmid:cfg.zmid,marker:{opacity:op,line:{width:.3,color:'#999'}},colorbar:{title:cfg.t,len:.55,tickformat:cfg.tf}}];
   const lg=S.mode==='forecast'?`Forecast for ${r.ty} from permits through ${r.origin}`:`Backtest: predicted ${r.ty} from permits through ${r.origin} (out-of-sample ${r.split} period)`;
-  $('legend').innerHTML=`${lg} &middot; ${M.label} &middot; ${r.cells.length} cells (~5 km&sup2;) &middot; county lines shown for reference`+($('metrosel').value==='mecklenburg'&&S.mode==='forecast'?' &middot; <b>2025 permits look incomplete for Mecklenburg, so this forecast starts from 2024</b>':'');
-  render(tr,`<div class="banner info">${cat().note}</div>`,{scope:'north america',projection:{type:'mercator'},fitbounds:'locations',showsubunits:true,showland:true}  /* scope 'usa' only works with albers */);panel(null);
+  $('legend').innerHTML=`${lg} &middot; ${M.label}`+($('metrosel').value==='mecklenburg'&&S.mode==='forecast'?' &middot; <b>2025 permits look incomplete for Mecklenburg, so this forecast starts from 2024</b>':'');
+  render(tr,'',{scope:'north america',projection:{type:'mercator'},fitbounds:'locations',showsubunits:true,showland:true}  /* scope 'usa' only works with albers */);panel(null);
 }
 function detailMetro(c){
   const r=metroData(),i=r.cells.indexOf(c);let h=`<b class="t">H3 cell</b><span class="mut small">${c} &middot; ${r.M.label}</span><br>`;
@@ -407,14 +442,15 @@ function scenPanel(force){
   if(!cat().dc||!D.dcs){el.innerHTML='<b class="t">Data centers only (for now)</b>Scenario sliders are available in the Data centers category, for inputs the model was actually trained on. The construction-jobs and permit models use no macro or investment inputs, so sliders there would be fake multipliers.';return}
   if(S.mode==='backtest'){el.innerHTML='<span class="mut">Switch to Forecast mode to use scenarios.</span>';return}
   const c=D.dcs.capex,fmt=v=>(v>0?'+':'')+Math.round(v*100)+'%';
-  const sl=(id,label,val,min,max,step,note)=>`<div class="sl"><div class="r"><span>${label}</span><b id="${id}v">${fmt(val)}</b></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"><div class="mut" style="font-size:11px">${note}</div></div>`;
-  el.innerHTML=`<b class="t">What if&hellip;</b>`+
-    sl('s_capex','AI / hyperscaler capex vs baseline',SC.capex,-0.5,1,0.1,`National: Microsoft, Alphabet, Amazon, Meta, Oracle ($${c.capex_bn[2025]}B in 2025). Learned link: +1% capex &rarr; +${c.elasticity.toFixed(2)}% counties with new projects (&plusmn;${c.se.toFixed(2)}, ${c.n} years; likely overstated by growing news coverage).`)+
-    sl('s_elec','Industrial electricity price',SC.elec,-0.2,0.2,0.1,'County input to the model (EIA-861)')+
-    sl('s_tax','Property tax rate',SC.tax,-0.2,0.2,0.1,'County input to the model (ACS)')+
-    `<div class="sl"><div class="r"><span>Data-processing &amp; hosting jobs</span><b id="s_dpv">${fmt(SC.dp)}</b></div><select id="s_dp">${D.dcs.grid.dp.map(v=>`<option value="${v}" ${v===SC.dp?'selected':''}>${fmt(v)}</option>`).join('')}</select><div class="mut" style="font-size:11px">County input to the model (BLS NAICS 518)</div></div>`+
-    `<div class="sl"><div class="r"><span>Apply to</span></div><div class="seg" id="s_scope"><button data-v="all" class="${SC.scope==='all'?'on':''}">All counties</button><button data-v="county" class="${SC.scope==='county'?'on':''}">Selected county</button></div><div class="mut" style="font-size:11px" id="s_scopeName">${SC.scope==='county'?(S.sel?'Changing only: '+(cname(S.sel)):'Click a county on the map'):'Same change everywhere'}</div></div>`+
-    `<button class="reset" id="s_reset">Reset to baseline</button><p class="mut" style="font-size:11px;margin:8px 0 0">Conditional model estimates, not causal forecasts. Slider values are % changes in inputs; map changes are percentage points of probability.</p>`;
+  const sl=(id,label,val,min,max,step,note)=>`<div class="sl"><div class="r"><span>${label}</span><b id="${id}v">${fmt(val)}</b></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"><div class="mut" style="font-size:11.5px">${note}</div></div>`;
+  const ten=(c.elasticity*10).toFixed(0),hint=t=>`<div class="mut" style="font-size:11.5px;margin-top:2px">${t}</div>`;
+  el.innerHTML=`<p style="margin:0 0 8px">Change a condition and see how each county's <b>chance of a new data center project in ${D.dct.year}</b> would move. The map switches to show the change: <span class="up">red = more likely</span>, <span class="dn">blue = less likely</span>.</p>`+
+    sl('s_capex','Big tech AI spending',SC.capex,-0.5,1,0.1,`Microsoft, Alphabet, Amazon, Meta and Oracle spent about $${c.capex_bn[2025]}B on capex in 2025. In past years, when that spending rose 10%, roughly ${ten}% more counties got a new project. This one moves every county.`)+
+    sl('s_elec','Electricity price for industry',SC.elec,-0.2,0.2,0.1,'Power is a data center\'s biggest running cost. Try -20% to see where cheaper power would matter most.')+
+    sl('s_tax','Property tax rate',SC.tax,-0.2,0.2,0.1,'Heads-up: past projects clustered in suburban counties that happen to have higher property taxes, so the model can move the "wrong" way here. It reflects past patterns, not tax policy.')+
+    `<div class="sl"><div class="r"><span>Data center workforce</span><b id="s_dpv">${fmt(SC.dp)}</b></div><select id="s_dp">${D.dcs.grid.dp.map(v=>`<option value="${v}" ${v===SC.dp?'selected':''}>${fmt(v)}</option>`).join('')}</select>${hint('Jobs in data processing and hosting already in the county: a sign of an existing data center cluster.')}</div>`+
+    `<div class="sl"><div class="r"><span>Apply the change to</span></div><div class="seg" id="s_scope"><button data-v="all" class="${SC.scope==='all'?'on':''}">All counties</button><button data-v="county" class="${SC.scope==='county'?'on':''}">One county</button></div><div class="mut" style="font-size:11.5px" id="s_scopeName">${SC.scope==='county'?(S.sel?'Changing only: '+(cname(S.sel)):'Click a county on the map'):'Same change everywhere'}</div></div>`+
+    `<button class="reset" id="s_reset">Reset</button><p class="mut" style="font-size:11.5px;margin:8px 0 0">These show what the model would predict, not guaranteed outcomes: it learned patterns from past projects, not cause and effect.</p>`;
   const go=()=>{if(!['scen','scen_diff'].includes($('view').value)){$('view').value='scen_diff'}draw()};
   ['s_capex','s_elec','s_tax'].forEach(id=>$(id).addEventListener('input',e=>{SC[id.slice(2)]=+e.target.value;$(id+'v').textContent=fmt(+e.target.value);go()}));
   $('s_dp').addEventListener('input',e=>{SC.dp=+e.target.value;$('s_dpv').textContent=fmt(SC.dp);go()});
@@ -428,62 +464,50 @@ function dctData(){
 function drawDCT(op){
   const r=dctData(),vw=$('view').value,act=vw==='actual_timed',sc=['scen','scen_diff'].includes(vw)&&!r.bt?scenProb():null,z=sc?(vw==='scen'?sc.scen:sc.scen.map((v,i)=>(v-sc.base[i])*100)):act?r.y:r.prob,PI=Object.fromEntries(D.dct.fips.map((f,i)=>[f,D.dct.proj_cum[i]]));
   const text=r.fips.map((f,i)=>`<b>${cname(f)}</b><br>Chance of a new data center project in ${r.year}: ${(r.prob[i]*100).toFixed(0)}%${sc?` &rarr; scenario ${(sc.scen[i]*100).toFixed(0)}% (${((sc.scen[i]-sc.base[i])*100>=0?'+':'')}${((sc.scen[i]-sc.base[i])*100).toFixed(1)} pp)`:''}${r.bt?'<br>Actual: '+(r.y[i]?'new project':'none'):''}<br>Earlier known projects: ${D.projects.filter(p=>p.fips===f&&p.year<r.year).length}`);
-  const tr=[{type:'choropleth',geojson:GEO,locations:r.fips,z,text,hoverinfo:'text',colorscale:vw==='scen_diff'?'RdBu':act?[[0,'#e5e7eb'],[1,'#08306b']]:SEQ,zmin:vw==='scen_diff'?-10:0,zmax:vw==='scen_diff'?10:act?1:.6,zmid:vw==='scen_diff'?0:undefined,reversescale:vw==='scen_diff',marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:{title:vw==='scen_diff'?'Change (pp)':act?'New project':'Chance',len:.55,tickformat:vw==='scen_diff'||act?undefined:'.0%'}}];
+  const tr=[{type:'choropleth',geojson:GEO,locations:r.fips,z,text,hoverinfo:'text',colorscale:vw==='scen_diff'?DIV:act?[[0,'#e5e7eb'],[1,'#08306b']]:SEQ,zmin:vw==='scen_diff'?-10:0,zmax:vw==='scen_diff'?10:act?1:.6,zmid:vw==='scen_diff'?0:undefined,marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:{title:vw==='scen_diff'?'Change (points)':act?'New project':'Chance',len:.55,tickformat:vw==='scen_diff'||act?undefined:'.0%'}}];
   if($('proj').checked){const pt=projTrace(r.bt?r.year:null);if(pt)tr.push(pt)}
   if($('dc').checked)tr.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#2dd4bf',line:{width:.5,color:'#fff'}}});
-  const Sp=D.dct.split[D.dct.chosen],M=D.dct.metrics.find(x=>x.model===D.dct.chosen);
-  $('legend').innerHTML=(r.bt?`Backtest: predicted ${r.year} using data through ${r.year-1} (model retrained that year)`:`Forecast for ${r.year} from data through ${r.year-1}`)+(sc?` &middot; <b>scenario</b>: expected counties with a new project ${sc.base.reduce((a,b)=>a+b,0).toFixed(0)} &rarr; ${sc.scen.reduce((a,b)=>a+b,0).toFixed(0)}`:'')+` &middot; untouched test 2023-25: PR-AUC ${Sp.test_pr_auc.toFixed(2)} vs base rate ~${(M.test_base_rate*100).toFixed(1)}%, ${Sp.test_top50.toFixed(0)} of the top 50 counties got a project per year`;
-  render(tr,`<div class="banner info">${cat().note}</div>`);panel(null);
+  $('legend').innerHTML=(r.bt?`Backtest: what the model predicted for ${r.year}`:`Forecast for ${r.year}: chance each county gets a new data center project`)+(sc?` &middot; <b>scenario</b>: counties expected to get a project ${sc.base.reduce((a,b)=>a+b,0).toFixed(0)} &rarr; ${sc.scen.reduce((a,b)=>a+b,0).toFixed(0)}`:'');
+  render(tr,'');panel(null);
 }
 function sensLine(f){
   if(!D.dcs||S.mode==='backtest')return '';
   const cur=countyEffect(f,SC.elec,SC.tax,SC.dp,SC.capex);if(!cur)return '';
-  const pp=(lo,hi,l1,l2)=>{const a=countyEffect(f,...lo),b=countyEffect(f,...hi),fm=x=>((x>=0?'+':'')+(x*100).toFixed(1));return `${l1}: <b>${fm(a.scen-a.base)}</b> pp &middot; ${l2}: <b>${fm(b.scen-b.base)}</b> pp`};
-  let h=`<div class="small" style="margin-top:6px"><b>What-if for this county</b><br>`;
-  if(scenActive())h+=`Current sliders: ${(cur.base*100).toFixed(0)}% &rarr; <b>${(cur.scen*100).toFixed(0)}%</b> (${((cur.scen-cur.base)*100>=0?'+':'')}${((cur.scen-cur.base)*100).toFixed(1)} pp)<br>`;
-  h+=`<span class="mut">Each lever on its own:</span><br>`+
-    `Electricity &mdash; ${pp([-0.2,0,0,0],[0.2,0,0,0],'&minus;20%','+20%')}<br>`+
-    `Property tax &mdash; ${pp([0,-0.2,0,0],[0,0.2,0,0],'&minus;20%','+20%')}<br>`+
-    `Hosting jobs &mdash; ${pp([0,0,-0.2,0],[0,0,1,0],'&minus;20%','+100%')}<br>`+
-    `AI capex &mdash; ${pp([0,0,0,-0.5],[0,0,0,1],'&minus;50%','+100%')}</div>`;
-  return h;
-}
-function dctLine(f){
-  const r=dctData(),i=r.fips.indexOf(f);let h='';
-  if(i>=0)h+=`Chance of a NEW data center project in ${r.year}: <b>${(r.prob[i]*100).toFixed(0)}%</b> <span class="mut small">(base rate ~2.5%)</span><br>`+(r.bt?`Actual ${r.year}: <b>${r.y[i]?'new project':'none'}</b><br>`:'');
-  h+=sensLine(f);
-  const pj=D.projects.filter(p=>p.fips===f).sort((a,b)=>b.year-a.year);
-  if(pj.length)h+='<div class="small" style="margin-top:4px"><b>Known projects ('+pj.length+')</b><br>'+pj.slice(0,8).map(p=>`${p.year}: ${p.name||'project'}${p.status&&/cancel|block|withdr|denied/i.test(p.status)?' <i>(cancelled/blocked)</i>':''}${p.source&&p.source.startsWith('http')?` <a href="${p.source}" target="_blank" rel="noopener">source</a>`:''}`).join('<br>')+(pj.length>8?'<br>&hellip;':'')+'</div>';
+  const d=lv=>{const e=countyEffect(f,...lv),x=(e.scen-e.base)*100;return `<b class="${x>0.05?'up':x<-0.05?'dn':''}">${x>=0?'+':''}${x.toFixed(1)} points</b>`};
+  let h=`<div class="small" style="margin-top:8px"><b>What would change the ${D.dct.year} chance here</b><br>`;
+  if(scenActive())h+=`With your slider settings: ${(cur.base*100).toFixed(0)}% &rarr; <b>${(cur.scen*100).toFixed(0)}%</b><br>`;
+  h+=`<table class="kv" style="font-size:12px;margin-top:2px"><tr><td>Electricity 20% cheaper</td><td>${d([-0.2,0,0,0])}</td></tr><tr><td>Electricity 20% pricier</td><td>${d([0.2,0,0,0])}</td></tr>`+
+    `<tr><td>Property tax 20% lower</td><td>${d([0,-0.2,0,0])}</td></tr><tr><td>Twice the data center workforce</td><td>${d([0,0,1,0])}</td></tr>`+
+    `<tr><td>Big tech AI spending doubles</td><td>${d([0,0,0,1])}</td></tr><tr><td>Big tech AI spending halves</td><td>${d([0,0,0,-0.5])}</td></tr></table>`+
+    `<span class="mut">Points = change in the percent chance.</span></div>`;
   return h;
 }
 /* ---------- county detail ---------- */
 function detail(f){
   S.sel=f;highlight();if(cat().dc){detailDC(f);scopeLabel();return}
-  if(cat().metro){detailMetro(f);return}const c=cat(),t=T(),r=t&&resolve();let h=`<b class="t">${cname(f)}</b><span class="mut small">FIPS ${f}</span><br>`;
-  h+=`Data centers (OpenStreetMap): <b>${D.dc_counts[f]||0}</b><br>`;
-  if(!t){$('detail').innerHTML=h+'<span class="mut small">No forecast for this category.</span>';return}
+  if(cat().metro){detailMetro(f);return}const c=cat(),t=T(),r=t&&resolve();let h=`<b class="t">${cname(f)}</b><span class="mut small">FIPS ${f} &middot; ${c.label.toLowerCase()}</span>`;
+  if(!t){$('detail').innerHTML=h+kv([['Data centers mapped',D.dc_counts[f]||0]])+'<span class="mut small">No forecast for this category.</span>';return}
   const i=r.src.fips.indexOf(f);
-  if(i<0){$('detail').innerHTML=h+'<span class="mut small">Not in the model: county too small or data suppressed.</span>';return}
-  const Y=t.history.years,n=Y.length,hv=t.history.values[f];
-  if(hv){const last=hv[n-1],prev=hv.slice(n-4,n-1),pm=prev.every(x=>x!=null)?prev.reduce((a,b)=>a+b,0)/3:null;
-    h+=`<b>Right now:</b> ${last==null?'n/a':fmt.format(last)} ${t.unit} in ${Y[n-1]}<br>`+(pm?`<b>Heating up:</b> ${last>=pm?'+':''}${((last-pm)/pm*100).toFixed(0)}% vs the ${Y[n-4]}-${Y[n-2]} average<br>`:'')}
-  h+=`<b>Next:</b> forecast for ${r.origin+r.h} (${r.h*12} months ahead)<br>`;
-  h+=`${r.label}: <b>${(r.prob[i]*100).toFixed(0)}%</b> <span class="mut small">(${MODEL_NAMES[r.m]}; base rate ${r.surge?'~25':r.useTop?10:(S.mode==='forecast'?r.src.base_rate*100:avgBoom(r)*100).toFixed(0)}%)</span><br>`;
-  h+=`Model range: ${(r.lo[i]*100).toFixed(0)}&ndash;${(r.hi[i]*100).toFixed(0)}% <span class="mut small">(spread across 3 models, not a confidence interval)</span><br>`;
-  h+=`Predicted growth: <b>${(r.gr[i]*100).toFixed(0)}%</b> vs 3-yr average<br>`;
-  if(S.mode==='backtest')h+=`Actual: <b>${r.src.top&&r.src.top[i]?'top-10% increase':'not top 10%'}</b>; ${r.src.boom[i]?'25%+ spike':'no spike'}, growth ${(Math.expm1(r.src.growth[i]/100)*100).toFixed(0)}%<br>`;
-  if(S.mode==='forecast'&&r.src.drivers&&r.src.drivers[i])h+=`<div class="small" style="margin-top:6px"><b>What drives this forecast</b>`+drivers(r.src.drivers[i])+'</div>';
-  const pj=D.projects.filter(p=>p.fips===f);if(pj.length)h+=`<div class="small" style="margin-top:6px"><b>Announced data center projects here (${pj.length})</b><br>`+pj.sort((a,b)=>b.year-a.year).slice(0,6).map(p=>`${p.name} (${p.year}${p.mw?', '+Math.round(p.mw)+' MW':''})`).join('<br>')+(pj.length>6?`<br><span class="mut">and ${pj.length-6} more</span>`:'')+'</div>';
-  h+='<div id="spark" style="height:120px"></div>';
+  if(i<0){$('detail').innerHTML=h+'<p class="mut small">Not in the model: the county is too small or its data is suppressed.</p>';return}
+  const Y=t.history.years,n=Y.length,hv=t.history.values[f]||[],last=hv[n-1],prev=hv.slice(n-4,n-1),pm=prev.length===3&&prev.every(x=>x!=null)?prev.reduce((a,b)=>a+b,0)/3:null;
+  const base=r.surge?25:r.useTop?10:Math.round((S.mode==='forecast'?r.src.base_rate:avgBoom(r))*100);
+  h+=kv([last!=null&&['Right now',fmt.format(last),`${t.unit} in ${Y[n-1]}`],
+    pm&&['Heating up',`${last>=pm?'+':''}${((last-pm)/pm*100).toFixed(0)}%`,`vs the ${Y[n-4]}-${Y[n-2]} average`],
+    [`${r.label} in ${r.origin+r.h}`,(r.prob[i]*100).toFixed(0)+'%',`typical county: ${base}% &middot; models range ${(r.lo[i]*100).toFixed(0)}-${(r.hi[i]*100).toFixed(0)}%`],
+    ['Expected change',`${r.gr[i]>=0?'+':''}${(r.gr[i]*100).toFixed(0)}%`,'vs its 3-year average'],
+    S.mode==='backtest'&&['What actually happened',r.src.top&&r.src.top[i]?'top-10% increase':r.src.boom[i]?'25%+ spike':'no surge',`growth ${(Math.expm1(r.src.growth[i]/100)*100).toFixed(0)}%`]]);
+  h+='<div id="spark" style="height:110px"></div>';
+  if(S.mode==='forecast'&&r.src.drivers&&r.src.drivers[i])h+=`<h4>What drives this forecast</h4><div class="small">`+drivers(r.src.drivers[i])+'</div>';
+  const pj=D.projects.filter(p=>p.fips===f);if(pj.length)h+=`<h4>Data center projects here (${pj.length})</h4><div class="small">`+pj.sort((a,b)=>b.year-a.year).slice(0,5).map(p=>`${p.year}: ${p.name}${p.mw?' ('+Math.round(p.mw)+' MW)':''}`).join('<br>')+(pj.length>5?`<br><span class="mut">and ${pj.length-5} more</span>`:'')+'</div>';
   $('detail').innerHTML=h;
-  const hist=t.history.values[f];if(hist){const dark=matchMedia('(prefers-color-scheme:dark)').matches;
-    Plotly.newPlot('spark',[{x:t.history.years,y:hist,type:'bar',marker:{color:t.history.years.map(y=>y===r.origin?'#f59e0b':'#6b8cce')}}],{margin:{l:34,r:4,t:4,b:20},height:120,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:10,color:dark?'#e8ecf2':'#1d2430'},yaxis:{title:t.unit}},{displayModeBar:false});}
+  if(hv.length){const dark=matchMedia('(prefers-color-scheme:dark)').matches;
+    Plotly.newPlot('spark',[{x:Y,y:hv,type:'bar',hovertemplate:'%{x}: %{y:,}<extra></extra>',marker:{color:Y.map(y=>y===Y[n-1]?'#f16913':'#9db4dc')}}],{margin:{l:40,r:4,t:4,b:20},height:110,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:10,color:dark?'#e8ecf2':'#1d2430'},yaxis:{title:{text:t.unit,font:{size:10}}}},{displayModeBar:false});}
 }
 function avgBoom(r){return r.src.boom.reduce((a,b)=>a+b,0)/r.src.boom.length}
 $('map').addEventListener('plotly_click',()=>{});
 /* ---------- bottom panel ---------- */
 const TABS_STD=[['compare','Model comparison'],['top','Top regions'],['feat','Features & ablation'],['valid','Validation & caveats']];
-const TABS_DC=[['dctimed','New-project forecast accuracy'],['dcscen','Scenario changes'],['dcmodel','Model comparison (spatial CV)'],['emerging','Emerging-location test'],['white','White space'],['pipeline','Epoch pipeline'],['dccaveats','Caveats']];
+const TABS_DC=[['dccaveats','How the forecast works'],['dctimed','Forecast accuracy by year'],['dcscen','What-if results'],['dcmodel','Siting score accuracy'],['emerging','New-location test'],['white','White space'],['pipeline','Large AI campuses']];
 const TABS_METRO=[['mcompare','Model comparison'],['mtop','Top cells'],['mvalid','Validation & caveats']];
 function tabList(){return cat().dc?TABS_DC:cat().metro?TABS_METRO:TABS_STD}
 function tabs(){const L=tabList();if(!L.some(x=>x[0]===S.tab))S.tab=L[0][0];$('tabs').innerHTML=L.map(([k,l])=>`<button data-k="${k}" class="${S.tab===k?'on':''}">${l}</button>`).join('');$('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.k;tabs();if(cat().dc)panelDC();else if(cat().metro)panelMetro();else panel(T()?resolve():null)})}
@@ -529,6 +553,73 @@ function panel(r){
       <p class="small mut"><b>Caveats.</b> Targets are proxies (permits, construction jobs), not project starts or dollars. "Boom" = next-period value at least 25% above the 3-year average. Forward forecasts refit each model on all labelled history; ensemble weights come from validation; forecast probabilities are raw (uncalibrated; backtest calibration error is typically 1&ndash;7 points). Job data include the COVID period and are only 2014&ndash;2024, so growth-size models often fail to beat "hold the latest level"; the models add more for ranking which counties are most likely to boom.</p>`;
   }
 }
+/* ---------- key takeaways page ---------- */
+const pct0=x=>`${x>=0?'+':''}${(x*100).toFixed(0)}%`;
+const clink=(f,c)=>`<a href="#" data-f="${f}" data-c="${c}">${cname(f)}</a>`;
+function natTotals(t){  // counties with all of the last 4 years, so the comparison is like for like
+  const Y=t.history.years,n=Y.length;let last=0,pm=0,c=0;
+  Object.values(t.history.values).forEach(v=>{const a=v.slice(n-4);if(a.length===4&&a.every(x=>x!=null)){last+=a[3];pm+=(a[0]+a[1]+a[2])/3;c++}});
+  return {last,pm,chg:(last-pm)/pm,c,yl:Y[n-1],span:`${Y[n-4]}-${Y[n-2]}`};
+}
+function heatingTop(t,minBase){
+  const Y=t.history.years,n=Y.length;
+  return Object.entries(t.history.values).map(([f,v])=>{const a=v.slice(n-4);if(!a.every(x=>x!=null))return null;const pm=(a[0]+a[1]+a[2])/3;return pm<minBase?null:[f,a[3],a[3]-pm,(a[3]-pm)/pm]}).filter(Boolean).sort((a,b)=>b[2]-a[2]).slice(0,10);
+}
+function nextTop(target){  // same "surge" score the map shows: top-10% increase OR 25%+ spike, best model on validation
+  const t=D.targets[target],h=Math.min(...Object.keys(t.forward).map(Number)),src=t.forward[h],m=D.best[`${target}|${h}|top`]||'ensemble';
+  const pt=src.ptop?(src.ptop[m]||src.ptop.ensemble):null,pc=src.prob[m]||src.prob.ensemble;
+  return {year:src.origin+h,rows:src.fips.map((f,i)=>[f,Math.max(pt?pt[i]??0:0,pc[i]??0)/1000]).sort((a,b)=>b[1]-a[1]).slice(0,10)};
+}
+function impBars(imp,k=6){const e=Object.entries(imp||{}).sort((a,b)=>b[1]-a[1]).slice(0,k),mx=e.length?e[0][1]:1;
+  return '<div class="imp">'+e.map(([f,v])=>`<span>${FEAT[f]||f}</span><i style="width:${Math.max(4,v/mx*100)}%"></i>`).join('')+'</div>'}
+function buildInsights(){
+  const tile=(k,v,s)=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  const live=D.projects.filter(LIVE),byY={},cty={};live.forEach(p=>{byY[p.year]=(byY[p.year]||0)+1;(cty[p.year]??=new Set()).add(p.fips)});
+  const nowY=new Date().getFullYear(),months=nowY===PY?new Date().getMonth()+1:12,pace=Math.round((byY[PY]||0)*12/months);
+  const exp=D.dct.prob.reduce((a,b)=>a+b,0)/1000,ratio=(byY[PY-1]||0)/Math.max(1,(cty[PY-1]||new Set()).size),prev=D.dct.prev;
+  let h=`<h3>Data centers</h3><p class="lead">Counted from ${fmt.format(D.projects.length)} dated projects (announcements, rezonings, permits, construction starts) found in news and public records. Cancelled or blocked projects are left out. Most projects only have a year, not a month, so this is by year.</p><div class="tiles">`+
+    tile(`Projects announced in ${PY-1}`,fmt.format(byY[PY-1]||0),`in ${(cty[PY-1]||new Set()).size} counties &middot; ${pct0((byY[PY-1]-byY[PY-2])/byY[PY-2])} vs ${PY-2}`)+
+    tile(`${PY} so far`,fmt.format(byY[PY]||0),`in ${(cty[PY]||new Set()).size} counties`+(months<12?` &middot; on pace for about ${fmt.format(pace)}`:''))+
+    (prev?tile(`Raw model count for ${prev.year}`,`${Math.round(prev.expected_counties)} counties`,`made from ${prev.year-1} data &middot; already ${(cty[prev.year]||new Set()).size} counties so far, so the raw count under-shoots the boom`):'')+
+    tile(`Expected in ${D.dct.year}`,`~${Math.round(exp)} counties`,`roughly ${fmt.format(Math.round(exp*ratio))} projects, if ${D.dct.year} is as busy as ${DC_LAST}. The model picks <b>where</b>; the total follows the latest year`)+
+    `</div><div class="cols" style="margin-top:14px"><div><b>Projects announced per year</b><div id="insbar" style="height:220px"></div></div><div><b>Most likely to get a new project in ${D.dct.year}</b><div class="tw"><table class="rank"><tr><th>County</th><th>Chance</th><th>Projects so far</th></tr>`+
+    D.dct.fips.map((f,i)=>[f,D.dct.prob[i]/1000,D.dct.proj_cum[i]]).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([f,p,c])=>`<tr><td>${clink(f,'dc')}</td><td>${(p*100).toFixed(0)}%</td><td>${c}</td></tr>`).join('')+'</table></div></div></div>';
+  const st={};live.filter(p=>p.year>=PY-1).forEach(p=>{const s=ST[p.fips.slice(0,2)];if(s)st[s]=(st[s]||0)+1});
+  h+=`<p class="small" style="margin-top:8px"><b>Busiest states, ${PY-1}-${PY}:</b> `+Object.entries(st).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([s,n])=>`${s} (${n})`).join(', ')+'</p>';
+  // permits and jobs
+  const groups=[['residential_permits','res','Housing',100],['all_construction','all','All construction',100],['nonres_building','com','Commercial building',50],['infrastructure','inf','Infrastructure',50]];
+  h+=`<h3>Construction overall</h3><p class="lead">Latest full year compared with the three years before it, across counties with complete data.</p><div class="tiles">`+
+    groups.map(([k,,lab])=>{const t=D.targets[k],n=natTotals(t);return tile(`${lab}, ${n.yl}`,fmt.format(Math.round(n.last)),`${t.unit} &middot; ${pct0(n.chg)} vs the ${n.span} average`)}).join('')+'</div>';
+  h+='<div class="cols" style="margin-top:14px">'+groups.slice(0,2).map(([k,c,lab,mb])=>{const t=D.targets[k],rows=heatingTop(t,mb);
+    return `<div><b>${lab}: heating up fastest</b><div class="tw"><table class="rank"><tr><th>County</th><th>${t.history.years.at(-1)}</th><th>Change</th></tr>`+rows.map(([f,l,d,p])=>`<tr><td>${clink(f,c)}</td><td>${fmt.format(l)}</td><td>+${fmt.format(Math.round(d))} (${pct0(p)})</td></tr>`).join('')+'</table></div></div>'}).join('')+'</div>';
+  h+='<div class="cols" style="margin-top:14px">'+groups.slice(0,2).map(([k,c,lab])=>{const N=nextTop(k);
+    return `<div><b>${lab}: most likely to surge in ${N.year}</b><div class="tw"><table class="rank"><tr><th>County</th><th>Chance of a surge</th></tr>`+N.rows.map(([f,p])=>`<tr><td>${clink(f,c)}</td><td>${(p*100).toFixed(0)}%</td></tr>`).join('')+'</table></div></div>'}).join('')+'</div>';
+  // what matters
+  const fi=k=>{const t=D.targets[k],h0=Math.min(...Object.keys(t.forward).map(Number));return t.forward[h0].importance};
+  h+=`<h3>What matters most to the forecasts</h3><p class="lead">The inputs each model leans on most. Longer bar = more influence on the prediction (not necessarily cause and effect).</p><div class="cols">`+
+    `<div><b>New data center projects</b>${impBars(D.dct.importance)}</div><div><b>Housing surges</b>${impBars(fi('residential_permits'))}</div><div><b>Construction job surges</b>${impBars(fi('all_construction'))}</div></div>`+
+    `<p class="small mut" style="margin-top:18px">"Surge" means a county lands in the top 10% for growth or jumps 25%+ above its own 3-year average. See <a href="#" data-page="stats">How accurate?</a> for how often the forecasts were right on past years.</p>`;
+  $('insights').innerHTML=h;
+  const yrs=Object.keys(byY).map(Number).filter(y=>y>=2018).sort(),dark=matchMedia('(prefers-color-scheme:dark)').matches;
+  Plotly.newPlot('insbar',[{type:'bar',x:yrs.map(String),y:yrs.map(y=>byY[y]),marker:{color:yrs.map(y=>y===PY?(dark?'#5b6b85':'#b4c6e7'):'#2a78d6')},text:yrs.map(y=>y===PY?'so far':''),textposition:'outside',hovertemplate:'%{x}: %{y} projects<extra></extra>'}],
+    {margin:{l:36,r:8,t:16,b:24},height:220,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:11,color:dark?'#e8ecf2':'#1d2430'},yaxis:{gridcolor:dark?'#2a313c':'#e4e7ec'}},{displayModeBar:false,responsive:true});
+}
+function showPage(p){
+  document.querySelector('.app').dataset.page=p;$('pages').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  if(p==='insights'&&!S.ins){buildInsights();S.ins=1}
+  if(p==='stats')$('cat2').value=CATS.some(c=>c.id===$('cat').value&&(c.target||c.dc||c.metro))?$('cat').value:'all';
+  if(p==='stats'&&$('cat2').value!==$('cat').value){$('cat').value=$('cat2').value;$('cat').dispatchEvent(new Event('input'))}
+  if(p==='map')Plotly.Plots.resize('map');
+  scrollTo(0,0);
+}
+$('pages').querySelectorAll('button').forEach(b=>b.onclick=()=>showPage(b.dataset.p));
+CATS.filter(c=>c.target||c.dc||c.metro).forEach(c=>$('cat2').add(new Option(c.label,c.id)));
+$('cat2').addEventListener('input',()=>{$('cat').value=$('cat2').value;$('cat').dispatchEvent(new Event('input'))});
+$('insights').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;
+  if(a.dataset.page){e.preventDefault();showPage(a.dataset.page);return}
+  if(!a.dataset.f)return;e.preventDefault();
+  if($('cat').value!==a.dataset.c){$('cat').value=a.dataset.c;$('cat').dispatchEvent(new Event('input'))}
+  showPage('map');detail(a.dataset.f)});
 /* ---------- wiring ---------- */
 $('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.mode=b.dataset.v;$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));refreshControls();draw()});
 ['cat','metrosel','horizon','origin','model','view','opacity','dc','epoch','proj'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='cat'){$('proj').checked=!!cat().dc}  // project diamonds are data center projects: on by default only there

@@ -142,11 +142,12 @@ def main():
               + (f"  | new-market PR-AUC {mn['pr_auc']:.3f} recall top5% {mn['recall_top5pct']:.2f}" if mn else ""))
     pd.DataFrame(recs).to_json(OUT / "dc_timed_metrics.json", orient="records", indent=1)
     pd.concat(preds).to_parquet(OUT / "dc_timed_predictions.parquet")
-    # forward forecast for the next year from the latest origin, all labelled years used
-    cur = d[d.origin == d.origin.max()]
+    # forward forecasts from the last two origins, all labelled years used: the latest is the live forecast,
+    # the one before it predicts the current (partial) year so the app can compare it with what has happened so far
+    cur = d[d.origin >= FORECAST_ORIGIN - 1]
     fwd = {n: make(n).fit(lab[FEATS], lab.y).predict_proba(cur[FEATS])[:, 1] for n in ("xgboost", "lightgbm", "logistic")}
     out = cur[["fips", "origin", "proj_cum"]].assign(**{f"p_{k}": v for k, v in fwd.items()})
-    out["p_ensemble"] = np.mean([pd.Series(v).rank(pct=True).values for v in fwd.values()], axis=0)
+    out["p_ensemble"] = np.mean([pd.Series(v, index=out.index).groupby(out.origin).rank(pct=True).values for v in fwd.values()], axis=0)
     out.to_parquet(ROOT / "data" / "dc_timed_forecast.parquet")
     imp = make("xgboost").fit(lab[FEATS], lab.y).feature_importances_
     (OUT / "dc_timed_importance.json").write_text(json.dumps(dict(sorted(zip(FEATS, map(float, imp.round(4))), key=lambda kv: -kv[1]))))

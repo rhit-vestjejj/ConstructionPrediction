@@ -158,7 +158,8 @@ def dc_timed_payload(payload):
     """Timed data center forecast (dc_timed.py) + the 915-project layer (data_dc_projects.py). Probabilities via an
     isotonic map fit on the walk-forward out-of-sample predictions (2021-2025)."""
     from sklearn.isotonic import IsotonicRegression
-    dt = pd.read_parquet(ROOT / "data" / "dc_timed_forecast.parquet")
+    dt_all = pd.read_parquet(ROOT / "data" / "dc_timed_forecast.parquet")
+    dt, dt_prev = dt_all[dt_all.origin == dt_all.origin.max()], dt_all[dt_all.origin == dt_all.origin.max() - 1]
     from sklearn.metrics import average_precision_score
     allp = pd.read_parquet(RES / "dc_timed_predictions.parquet")
     allp["ty"] = allp.origin + 1
@@ -173,7 +174,9 @@ def dc_timed_payload(payload):
     payload["dct"] = {"year": int(dt.origin.max()) + 1, "fips": dt.fips.tolist(), "prob": ints(iso.predict(dt[f"p_{chosen}"]), 1000), "proj_cum": dt.proj_cum.astype(int).tolist(),
                       "chosen": chosen, "split": split,
                       "bt": {int(o) + 1: {"fips": g.fips.tolist(), "prob": ints(iso.predict(g.score), 1000), "y": g.y.astype(int).tolist()} for o, g in xg.groupby("origin")},
-                      "metrics": json.loads((RES / "dc_timed_metrics.json").read_text()), "importance": json.loads((RES / "dc_timed_importance.json").read_text())}
+                      "metrics": json.loads((RES / "dc_timed_metrics.json").read_text()), "importance": json.loads((RES / "dc_timed_importance.json").read_text()),
+                      # expected number of counties with a new project in the current year, as forecast from the year before
+                      "prev": {"year": int(dt_prev.origin.max()) + 1, "expected_counties": round(float(iso.predict(dt_prev[f"p_{chosen}"]).sum()), 1)} if len(dt_prev) else None}
     pj = pd.read_parquet(ROOT / "data" / "dc_projects.parquet")
     cen = centroids().set_index("fips")
     pj = pj[pj.fips.isin(cen.index)]
