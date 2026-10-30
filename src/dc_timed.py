@@ -25,7 +25,8 @@ from forecasting import NO_WAGE_TAX_STATES
 from geo import ROOT, centroids
 
 OUT = ROOT / "outputs" / "results"
-FIRST_ORIGIN, LAST_LABEL = 2016, 2025  # 2026 news is a partial year
+FIRST_ORIGIN, LAST_LABEL = 2016, 2025  # 2026 news is a partial year: never a label, but it is the forecast origin
+FORECAST_ORIGIN = LAST_LABEL + 1  # forecast the year after the current one from everything known so far
 TEST_YEARS = list(range(2021, LAST_LABEL + 1))
 K = 8
 STATIC = ["mw_total", "mw_150km", "ind_price", "kv345_dist_km", "kv230_dist_km", "n_utilities", "cdd", "risk_score",
@@ -58,14 +59,14 @@ def panel() -> pd.DataFrame:
     nbr = NearestNeighbors(n_neighbors=K + 1).fit(xy).kneighbors(xy, return_distance=False)[:, 1:]
     state = pd.Series(keep.str[:2], index=keep)
     rows = []
-    for t in range(FIRST_ORIGIN, LAST_LABEL + 1):  # last origin = forecast row (label t+1 not yet complete)
+    for t in range(FIRST_ORIGIN, FORECAST_ORIGIN + 1):  # rows after LAST_LABEL - 1 have no complete label year
         jt = min(t, max(jobs["23"].columns))  # QCEW annual ends 2024: carry the latest year forward
         f = pd.DataFrame(index=keep)
         for c, nm in (("518", "jobs518"), ("23", "jobs23"), ("2362", "jobs2362"), ("493", "jobs493")):
             f[nm] = np.log1p(jobs[c].reindex(keep)[jt])
         f["estabs518"] = np.log1p(est518.reindex(keep)[jt])
         f["g518"] = f.jobs518 - np.log1p(jobs["518"].reindex(keep)[jt - 2])
-        f["units"] = np.log1p(units.reindex(keep).get(t))
+        f["units"] = np.log1p(units.reindex(keep)[min(t, max(units.columns))])  # permits end 2025: carry forward
         v = t - 2
         if v in A["pop"].columns:
             f["pop_lu"], f["inc_lu"] = np.log(A["pop"].reindex(keep)[v]), np.log(A["med_income"].reindex(keep)[v])

@@ -27,6 +27,17 @@ with sync_playwright() as p:
     pg.wait_for_selector(".choroplethlayer path", timeout=30000)
     n = lambda: pg.locator(".choroplethlayer path").count()
     check("initial map renders", n() > 500, n())
+    # ---- right now / heating up / next lenses and county search
+    for lens, view in [("now", "now"), ("trend", "trend"), ("next", "surge")]:
+        pg.click(f'#lens button[data-v="{lens}"]')
+        pg.wait_for_timeout(700)
+        check(f"lens {lens} switches the map", pg.input_value("#view") == view and n() > 500 and not errs, pg.input_value("#view"))
+    pg.fill("#search", "Maricopa County, AZ")
+    pg.dispatch_event("#search", "change")
+    pg.wait_for_timeout(600)
+    check("search selects the county", "Maricopa County, AZ" in pg.inner_text("#detail"), pg.inner_text("#detail")[:60])
+    check("selected county is outlined", pg.evaluate("$('map').data.some(t=>t.name==='sel'&&t.locations[0]==='04013')"))
+    pg.click("#adv summary")  # horizon, model and mode live under Advanced settings
 
     def counties_click():
         """Real mouse click on a county path near the middle of the map."""
@@ -160,9 +171,15 @@ with sync_playwright() as p:
     pg.select_option("#cat", "all")
     pg.wait_for_timeout(700)
     check("default view is the surge view", pg.input_value("#view") == "surge", pg.input_value("#view"))
-    check("announced projects layer drawn", pg.locator(".scattergeo .point").count() > 50, pg.locator(".scattergeo .point").count())
+    check("data center projects hidden outside data centers", pg.locator(".scattergeo .point").count() == 0, pg.locator(".scattergeo .point").count())
     pg.select_option("#cat", "dc")
     pg.wait_for_timeout(600)
+    check("announced projects layer drawn", pg.locator(".scattergeo .point").count() > 50, pg.locator(".scattergeo .point").count())
+    check("data center forecast is for next year", "2027" in pg.inner_text("#view"), pg.inner_text("#view")[:80])
+    for lens, view in [("now", "count"), ("trend", "dctrend")]:
+        pg.click(f'#lens button[data-v="{lens}"]')
+        pg.wait_for_timeout(600)
+        check(f"dc lens {lens}", pg.input_value("#view") == view and n() > 300, pg.input_value("#view"))
     pg.check("#dc")
     pg.wait_for_timeout(500)
     check("OSM layer toggles", pg.locator(".scattergeo .point").count() > 100, pg.locator(".scattergeo .point").count())
