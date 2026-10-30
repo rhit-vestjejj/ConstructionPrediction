@@ -1,0 +1,140 @@
+{
+  "coverage": {
+    "projects_researched": 90,
+    "projects_with_any_builder_named": 37,
+    "projects_with_public_builder": 9,
+    "projects_where_GC_is_public": 7,
+    "projects_where_GC_named": 33,
+    "public_firm_counts": {
+      "HOT.DE": 4,
+      "ORAS.CA": 2,
+      "000720.KS": 1,
+      "PRIM": 1,
+      "MTZ": 1,
+      "MTRX": 1
+    },
+    "private_firm_counts": {
+      "Yates Construction": 4,
+      "DPR Construction": 4,
+      "Clayco": 3,
+      "Walbridge": 3,
+      "Gray Construction": 3,
+      "Kiewit": 2,
+      "Layton Construction": 2,
+      "Hensel Phelps": 2,
+      "Haskell": 2,
+      "Wages Civil LLC": 2,
+      "JE Dunn Construction": 2,
+      "Lee Lewis Construction": 1,
+      "Parkhill": 1,
+      "Kiewit (Kiewit New Mexico Co.)": 1,
+      "Concrete Strategies": 1,
+      "Kokosing Industrial, Inc.": 1,
+      "Phillips Heavy Civil": 1,
+      "Gaylor Electric": 1,
+      "Icon Mechanical": 1,
+      "Linxon": 1,
+      "Brasfield & Gorrie": 1,
+      "Southern Rock Construction": 1,
+      "Birdsong Construction": 1,
+      "T5 Data Centers": 1,
+      "Sundt Construction": 1
+    }
+  },
+  "builder_named": {
+    "CAR[-10,-1]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": -0.008835038804382028,
+      "median": -0.010556571022238394,
+      "t": -0.2964189876278701,
+      "p": 0.7788277391868332,
+      "pct_positive": 0.5
+    },
+    "CAR[0,1]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": 0.0015954908062028085,
+      "median": 0.005095531307162783,
+      "t": 0.12309511283833233,
+      "p": 0.9068267321528515,
+      "pct_positive": 0.5
+    },
+    "CAR[0,5]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": 0.017680624983325843,
+      "median": 0.014882940804810924,
+      "t": 0.922398909543272,
+      "p": 0.3986453233439182,
+      "pct_positive": 0.5
+    },
+    "CAR[0,20]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": 0.0034284418163555534,
+      "median": -0.011932307960345117,
+      "t": 0.115945076354208,
+      "p": 0.9122088596888238,
+      "pct_positive": 0.3333333333333333
+    }
+  },
+  "perfect_foresight": {
+    "CAR[-60,5]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": 0.027216807287954434,
+      "median": 0.028073459365164897,
+      "t": 0.23840386855034518,
+      "p": 0.8210303737386098,
+      "pct_positive": 0.5
+    },
+    "CAR[-120,5]": {
+      "n": 6,
+      "n_firms": 3,
+      "mean": 0.1887071008319784,
+      "median": 0.14198223670547364,
+      "t": 1.205567330153213,
+      "p": 0.28191903726978723,
+      "pct_positive": 0.6666666666666666
+    }
+  },
+  "project_announced": {
+    "CAR[-10,-1]": {
+      "n": 3,
+      "n_firms": 2,
+      "mean": -0.012016893636817481,
+      "median": 0.001294855691931376,
+      "t": -0.44733591852555515,
+      "p": 0.6984136853396326,
+      "pct_positive": 0.6666666666666666
+    },
+    "CAR[0,1]": {
+      "n": 3,
+      "n_firms": 2,
+      "mean": 0.02895955383903422,
+      "median": 0.006111888910965991,
+      "t": 0.9738147487539462,
+      "p": 0.4328611546690064,
+      "pct_positive": 0.6666666666666666
+    },
+    "CAR[0,5]": {
+      "n": 3,
+      "n_firms": 2,
+      "mean": 0.04953875399486429,
+      "median": 0.026884461490901974,
+      "t": 1.7763472088692185,
+      "p": 0.2176586626152372,
+      "pct_positive": 1.0
+    },
+    "CAR[0,20]": {
+      "n": 3,
+      "n_firms": 2,
+      "mean": 0.03463734293640915,
+      "median": -0.013702944719858218,
+      "t": 0.581766678202541,
+      "p": 0.6195614049081707,
+      "pct_positive": 0.3333333333333333
+    }
+  }
+}
