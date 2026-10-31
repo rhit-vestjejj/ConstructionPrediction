@@ -19,6 +19,13 @@ except that view, which needs the files served (`serve.py` or any static host). 
 The map is drawn on a canvas from county outlines pre-projected at build time (`src/albers_usa.py`, d3's AlbersUsa
 frame), so a recolor, pan or zoom is a single repaint.
 
+## Hosting (GitHub Pages)
+
+`.github/workflows/pages.yml` publishes the site on every push to `main` that changes the built app: it copies
+`outputs/forecast_app.html` (as `index.html`) and `outputs/forecast_backtest.json` to Pages. One-time setup: repo
+Settings → Pages → Source: **GitHub Actions**. The site is then at https://rhit-vestjejj.github.io/ConstructionPrediction/.
+Rebuild the app (`build_forecast_app.py`) and commit `outputs/` before pushing.
+
 ## Rebuild from scratch
 
 A Census API key goes in `.env` as `CENSUS_API_KEY=...` (git-ignored). Then, from `src/`:

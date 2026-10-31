@@ -1,0 +1,43 @@
+# Publishes the forecast site to GitHub Pages: just the built page (as index.html) and its past-year data.
+# Rebuild with src/build_forecast_app.py and commit outputs/ before pushing.
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - outputs/forecast_app.html
+      - outputs/forecast_backtest.json
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: outputs
+      - name: Stage site
+        run: |
+          mkdir _site
+          cp outputs/forecast_app.html _site/index.html
+          cp outputs/forecast_backtest.json _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
