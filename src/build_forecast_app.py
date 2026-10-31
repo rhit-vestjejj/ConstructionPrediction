@@ -13,6 +13,7 @@ import pandas as pd
 import xgboost as xgb
 
 import forecasting as fc
+from albers_usa import county_paths
 from geo import ROOT, centroids, load_geojson
 
 RES = ROOT / "outputs" / "results"
@@ -272,13 +273,44 @@ def main():
     render(payload, geo)
 
 
+def light_geo(geo, nd=3):
+    """Round county outlines to ~100 m and drop repeated points. Neighbouring counties share vertices, so rounding
+    keeps shared borders identical (no slivers); it trims ~30% of the bytes the browser downloads and parses."""
+    def ring(r):
+        out = []
+        for x, y in r:
+            p = [round(x, nd), round(y, nd)]
+            if not out or out[-1] != p:
+                out.append(p)
+        return out if len(out) >= 4 else None
+    feats = []
+    for f in geo["features"]:
+        g = f["geometry"]
+        polys = [g["coordinates"]] if g["type"] == "Polygon" else g["coordinates"]
+        polys = [[r for r in map(ring, p) if r] for p in polys]
+        polys = [p for p in polys if p]
+        if polys:
+            feats.append({"type": "Feature", "id": f["id"], "properties": {},
+                          "geometry": {"type": "MultiPolygon", "coordinates": polys} if len(polys) > 1 else {"type": "Polygon", "coordinates": polys[0]}})
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def render(payload, geo):
-    """Fill the template; `build_forecast_app.py --template-only` re-renders from the cached payload in seconds."""
+    """Fill the template; `build_forecast_app.py --template-only` re-renders from the cached payload in seconds.
+    Past-year (backtest) predictions go to a separate file the page fetches only when someone opens "Check past years"."""
+    payload = json.loads(json.dumps(payload))  # don't mutate the cached payload
+    backtest = {k: t.pop("backtest") for k, t in payload["targets"].items()}
     html = (ROOT / "src" / "forecast_template.html").read_text()
-    html = html.replace("__DATA__", json.dumps(payload, separators=(",", ":"), allow_nan=False)).replace("__GEO__", json.dumps(geo, separators=(",", ":")))
+    inline = lambda obj: json.dumps(obj, separators=(",", ":"), allow_nan=False).replace("</", "<\\/")  # safe inside <script type="application/json">
+    lg = light_geo(geo)
+    for m in payload["metro"].values():  # metro maps outline their own counties; the national map uses pre-projected paths
+        m["county_geo"] = {"type": "FeatureCollection", "features": [f for f in lg["features"] if f["id"] in set(m["counties"])]}
+    html = html.replace("__DATA__", inline(payload)).replace("__PATHS__", inline(county_paths(geo)))
     out = ROOT / "outputs" / "forecast_app.html"
     out.write_text(html)
-    print(f"wrote {out} ({out.stat().st_size / 1e6:.1f} MB)")
+    bt = ROOT / "outputs" / "forecast_backtest.json"
+    bt.write_text(json.dumps(backtest, separators=(",", ":"), allow_nan=False))
+    print(f"wrote {out} ({out.stat().st_size / 1e6:.1f} MB) and {bt.name} ({bt.stat().st_size / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":

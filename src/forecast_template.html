@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Construction Forecast Map</title>
 <link rel="icon" href="data:,">
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
   :root{--bg:#fff;--fg:#1d2430;--mut:#667085;--line:#e4e7ec;--card:#f8f9fb;--acc:#2563eb;--warn:#b54708;--warnbg:#fffaeb}
   @media (prefers-color-scheme:dark){:root{--bg:#14181f;--fg:#e8ecf2;--mut:#98a2b3;--line:#2a313c;--card:#1c222b;--acc:#6ea0ff;--warn:#fdb022;--warnbg:#2a2110}}
@@ -41,7 +41,10 @@
   .card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px}
   .card b.t{display:block;font-size:15px}.kv{margin:8px 0 4px;font-size:13px}.kv td{padding:3px 0;border:0;white-space:normal;vertical-align:top}.kv td:last-child{text-align:right;padding-left:8px}.kv .sub{display:block;font-size:11.5px;color:var(--mut)}
   .card h4{font-size:12px;margin:12px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}.mut{color:var(--mut)}.small{font-size:12px}
-  main{min-width:0;position:relative}#map{width:100%;height:calc(100vh - 250px);min-height:420px}
+  main{min-width:0;position:relative}#map{position:relative}#map svg{display:block;cursor:grab;touch-action:none}#map svg:active{cursor:grabbing}#map path.c{vector-effect:non-scaling-stroke}#map .c:hover{stroke:var(--fg);stroke-width:1.2}
+  #tip{position:fixed;pointer-events:none;z-index:9;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);max-width:280px;display:none}
+  .cbar{position:absolute;right:14px;top:8px;width:220px;font-size:11px;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px 2px}.cbar .g{height:10px;border-radius:3px}.cbar .tk{display:flex;justify-content:space-between}
+  .zbtn{position:absolute;right:14px;bottom:10px;display:flex;flex-direction:column;gap:2px}.zbtn button{width:28px;height:28px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer;font:inherit}#map{width:100%;height:calc(100vh - 250px);min-height:420px}
   .legend{position:absolute;left:12px;bottom:8px;font-size:12px;color:var(--mut);background:var(--bg);padding:4px 8px;border-radius:6px;border:1px solid var(--line)}
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
   .tabs button{border:0;background:none;color:var(--mut);padding:8px 10px;font:inherit;cursor:pointer;border-bottom:2px solid transparent}
@@ -49,7 +52,7 @@
   table{border-collapse:collapse;width:100%;font-size:12.5px}td,th{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
   td:first-child,th:first-child{text-align:left}th{color:var(--mut);font-weight:500}tr.best td{font-weight:600}
   .tw{overflow-x:auto}
-  @media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}header{order:0}aside.left{order:1}main{order:2}aside.right{order:3}.page{order:4;padding:14px 16px 30px}aside{max-height:none}aside.left,aside.right{border:0;border-bottom:1px solid var(--line)}#map{height:48vh;min-height:300px}.legend{position:static;margin:4px 12px}.lens button{min-width:0}.lens button small{display:none}}
+  @media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}header{order:0}aside.left{order:1}main{order:2}aside.right{order:3}.page{order:4;padding:14px 16px 30px}aside{max-height:none}aside.left,aside.right{border:0;border-bottom:1px solid var(--line)}#map{height:48vh;min-height:300px}.legend{position:static;margin:4px 12px}.cbar{left:8px;right:auto;width:62%;top:6px}.lens button{min-width:0}.lens button small{display:none}}
 </style></head><body>
 <div class="app" data-page="map">
 <header><div><h1>Construction forecast map</h1>
@@ -105,8 +108,19 @@
 </section>
 </div>
 
+<script type="application/json" id="data">__DATA__</script>
+<script type="application/json" id="paths">__PATHS__</script>
 <script>
-const D=__DATA__, GEO=__GEO__;
+const D=JSON.parse(document.getElementById('data').textContent);  // JSON.parse is far faster than an 8 MB JS literal
+const PATH=JSON.parse(document.getElementById('paths').textContent);  // county outlines pre-projected at build time (albers_usa.py, d3's 960x500 AlbersUsa frame)
+const GEO={us:true};  // stands for "all US counties" in traces
+const selGeo=()=>({sel:true,ids:S.sel&&PATH[S.sel]?[S.sel]:[]});
+Object.values(D.targets).forEach(t=>t.backtest={});  // past-year predictions live in forecast_backtest.json, loaded on demand
+async function loadBacktest(){
+  if(D.btLoaded)return true;
+  try{const B=await (await fetch('forecast_backtest.json')).json();Object.entries(B).forEach(([k,v])=>D.targets[k].backtest=v);return D.btLoaded=true}
+  catch(e){return false}  // file:// pages can't fetch; serve.py or any web host can
+}
 const $=id=>document.getElementById(id), fmt=new Intl.NumberFormat();
 // Level fix for the data center forecast. The calibrated chances reproduce the 2021-25 average (~80 counties a year),
 // but activity has grown fast (39 counties in 2021, 163 in 2025), so the raw level badly under-counts. Rescale on the
@@ -131,6 +145,7 @@ const FEAT={lu_0:'Activity in the latest year',lu_1:'Activity 1 year earlier',lu
 const drivers=L=>'<ul class="drv">'+L.map(d=>`<li title="${d[0]}: ${d[1]}"><span>${FEAT[d[0]]||d[0]}</span>${d[1]>0?'<span class="up">&#9650; raises</span>':'<span class="dn">&#9660; lowers</span>'}</li>`).join('')+'</ul>';
 const HEAT=[[0,'#fff5eb'],[.3,'#fdbe85'],[.6,'#f16913'],[1,'#7f2704']];  // observed activity (warm); forecasts stay blue
 const DIV=[[0,'#2166ac'],[.5,'#f2f2f0'],[1,'#b2182b']];  // falling = blue, flat = gray, rising = red
+const lazy=(arr,fn)=>i=>fn(arr[i],i);  // hover text is built only for the shape under the mouse
 const LENS_OF=v=>['now','count','hist'].includes(v)?'now':['trend','dctrend','mtrend'].includes(v)?'trend':'next';
 const CATS=[
  {id:'all',label:'All construction',target:'all_construction',short:'Measured by construction jobs in each county (BLS).'},
@@ -229,7 +244,7 @@ function draw(){
   if(!r){render([],'<div class="banner">No predictions saved for this selection.</div>');return}
   const sc=SCALES[r.view];
   const vals=r.view==='actual_surge'?r.src.top.map((v,i)=>v==null?null:Math.max(v,r.src.boom[i])):r.view==='prob'||r.view==='top'||r.view==='surge'?r.prob:r.view==='growth'?r.gr:r.view==='disagree'?r.dis:r.view==='actual_top'?r.src.top:r.src.boom;
-  const text=r.src.fips.map((f,i)=>{let s=`<b>${cname(f)}</b><br>${r.label}: ${r.prob[i]==null?'n/a':(r.prob[i]*100).toFixed(0)+'%'} (models ${(r.lo[i]*100).toFixed(0)}-${(r.hi[i]*100).toFixed(0)}%)<br>Predicted growth: ${r.gr[i]==null?'n/a':(r.gr[i]*100).toFixed(0)+'%'}`;
+  const text=lazy(r.src.fips,(f,i)=>{let s=`<b>${cname(f)}</b><br>${r.label}: ${r.prob[i]==null?'n/a':(r.prob[i]*100).toFixed(0)+'%'} (models ${(r.lo[i]*100).toFixed(0)}-${(r.hi[i]*100).toFixed(0)}%)<br>Predicted growth: ${r.gr[i]==null?'n/a':(r.gr[i]*100).toFixed(0)+'%'}`;
     if(S.mode==='backtest')s+=`<br>Actual: ${r.src.top&&r.src.top[i]?'top-10% increase':'not top 10%'}; ${r.src.boom[i]?'25%+ spike':'no spike'}, growth ${(Math.expm1(r.src.growth[i]/100)*100).toFixed(0)}%`;return s});
   traces.push({type:'choropleth',geojson:GEO,locations:r.src.fips,z:vals,text,hoverinfo:'text',colorscale:sc.cs,zmin:sc.zmin,zmax:sc.zmax,zmid:sc.zmid,marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:{title:sc.t,len:.55,tickformat:['growth','prob','top','surge','disagree'].includes(r.view)?'.0%':undefined}});
   if($('dc').checked)traces.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#f59e0b',line:{width:.6,color:'#fff'}}});
@@ -251,7 +266,7 @@ function drawHist(op,c,t){
   const Y=t.history.years,n=Y.length,yl=Y[n-1],span=`${Y[n-4]}-${Y[n-2]}`,H=histStats(t),now=$('view').value==='now';
   const z=H.map(h=>now?(h.last==null?null:Math.log10(h.last+1)):(h.chg==null?null:Math.max(-1,Math.min(1,h.chg))));
   const zmax=Math.max(1,Math.ceil(Math.max(...z.filter(v=>v!=null))));
-  const text=H.map(h=>`<b>${cname(h.f)}</b><br>${yl}: ${h.last==null?'n/a':fmt.format(h.last)} ${t.unit}<br>${span} average: ${h.pm==null?'n/a':fmt.format(Math.round(h.pm))}`+(h.chg==null?'':`<br>Change: ${h.chg>=0?'+':''}${(h.chg*100).toFixed(0)}%`));
+  const text=lazy(H,h=>`<b>${cname(h.f)}</b><br>${yl}: ${h.last==null?'n/a':fmt.format(h.last)} ${t.unit}<br>${span} average: ${h.pm==null?'n/a':fmt.format(Math.round(h.pm))}`+(h.chg==null?'':`<br>Change: ${h.chg>=0?'+':''}${(h.chg*100).toFixed(0)}%`));
   const traces=[{type:'choropleth',geojson:GEO,locations:H.map(h=>h.f),z,text,hoverinfo:'text',colorscale:now?HEAT:DIV,zmin:now?0:-.6,zmax:now?zmax:.6,zmid:now?undefined:0,
     marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:now?{title:t.unit,...logTicks(zmax)}:{title:'Change',tickformat:'+.0%'}}];
   if($('dc').checked)traces.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#2dd4bf',line:{width:.6,color:'#fff'}}});
@@ -260,22 +275,120 @@ function drawHist(op,c,t){
     :`Heating up: ${yl} compared with the ${span} average &middot; red = rising, blue = falling &middot; counties averaging under ${MIN_BASE} ${t.unit} are left blank`;
   render(traces,'');panel(resolve());
 }
-function render(traces,note,geoX){
-  const dark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const L={geo:Object.assign({scope:'usa',projection:{type:'albers usa'},bgcolor:'rgba(0,0,0,0)',showlakes:false,landcolor:dark?'#2a2f38':'#e5e7eb'},geoX||{}),margin:{l:0,r:0,t:0,b:0},paper_bgcolor:'rgba(0,0,0,0)',font:{color:dark?'#e8ecf2':'#1d2430'},showlegend:false,dragmode:'pan'},C={responsive:true,scrollZoom:true,displaylogo:false};
-  const narrow=innerWidth<700;  // phones: color bar goes under the map instead of eating half its width
-  traces.forEach(t=>{if(!t.colorbar)return;const ttl=typeof t.colorbar.title==='string'?t.colorbar.title:t.colorbar.title?.text||'';
-    Object.assign(t.colorbar,narrow?{orientation:'h',len:.9,thickness:10,x:.5,xanchor:'center',y:0,yanchor:'top',title:{text:ttl,side:'top'}}:{len:.5,thickness:12,title:{text:ttl}})});
-  if(narrow)L.margin.b=50;
-  if(!geoX)traces.push({type:'choropleth',name:'sel',geojson:GEO,locations:[S.sel||''],z:[0],showscale:false,hoverinfo:'skip',
-    colorscale:[[0,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,0)']],marker:{line:{width:2.5,color:dark?'#fff':'#111'}}});  // selected county outline
-  syncLens();
-  // Plotly.react can't switch between the national (albers) and zoomed metro (mercator + fitbounds) maps; rebuild instead
-  const key=geoX?'metro:'+$('metrosel').value:'us';
-  if(S.geoKey!==key){Plotly.purge('map');Plotly.newPlot('map',traces,L,C);attachClick();S.geoKey=key}else Plotly.react('map',traces,L,C);
-  let n=$('mapnote');if(!n){n=document.createElement('div');n.id='mapnote';$('map').parentNode.insertBefore(n,$('map'))}n.innerHTML=note;
+/* ---------- map renderer (canvas) ----------
+   The draw* functions describe what to show as Plotly-style traces; this paints them on one <canvas>. County outlines
+   arrive pre-projected (albers_usa.py), are turned into Path2D objects once, and every recolor, pan or zoom is a single
+   repaint. (SVG with 3,000+ county elements and Plotly before it took seconds per change.) */
+const NAMED={Purples:[[0,'#f2f0f7'],[1,'#54278f']],RdBu:DIV};
+const MAP={t:d3.zoomIdentity,layers:[],pts:[],shapes:new WeakMap()};
+function colorFn(cs,zmin,zmax){  // 256-step lookup table: interpolating a color string per county per draw was the slow part
+  cs=NAMED[cs]||cs;const sc=d3.scaleLinear().domain(cs.map(c=>c[0])).range(cs.map(c=>c[1])).interpolate(d3.interpolateRgb).clamp(true),lut=d3.range(256).map(i=>sc(i/255)),span=zmax-zmin||1;
+  return z=>z==null||Number.isNaN(z)?null:lut[Math.max(0,Math.min(255,Math.round((z-zmin)/span*255)))]}
+const FMT={'.0%':d3.format('.0%'),'+.0%':d3.format('+.0%'),def:d3.format(',~g')},tickFmt=f=>FMT[f]||FMT.def;
+function mapSetup(){
+  const el=$('map');el.innerHTML='';
+  const cv=document.createElement('canvas');cv.style.cssText='width:100%;height:100%;display:block;cursor:grab;touch-action:none';el.appendChild(cv);
+  MAP.cv=cv;MAP.ctx=cv.getContext('2d');MAP.hit=document.createElement('canvas').getContext('2d');
+  MAP.zoom=d3.zoom().scaleExtent([1,40]).on('zoom',e=>{MAP.t=e.transform;paint()});
+  MAP.sel=d3.select(cv).call(MAP.zoom).on('dblclick.zoom',null);
+  const z=document.createElement('div');z.className='zbtn';z.innerHTML='<button title="Zoom in">+</button><button title="Zoom out">&minus;</button><button title="Reset view">&#8634;</button>';
+  const [zi,zo,zr]=z.querySelectorAll('button');zi.onclick=()=>MAP.sel.transition().call(MAP.zoom.scaleBy,1.6);zo.onclick=()=>MAP.sel.transition().call(MAP.zoom.scaleBy,1/1.6);zr.onclick=()=>MAP.sel.transition().call(MAP.zoom.transform,d3.zoomIdentity);
+  el.appendChild(z);
+  let tip=$('tip');if(!tip){tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip)}
+  cv.addEventListener('mousemove',e=>{const h=hitAt(e);if(h!==MAP.hov){MAP.hov=h;paint()}cv.style.cursor=h&&h.loc?'pointer':'grab';
+    const txt=h&&h.tr&&(typeof h.tr.text==='function'?h.tr.text(h.i):h.tr.text?.[h.i]);if(!txt){tip.style.display='none';return}tip.innerHTML=txt;tip.style.display='block';
+    tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px';tip.style.top=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8)+'px'});
+  cv.addEventListener('mouseleave',()=>{tip.style.display='none';if(MAP.hov){MAP.hov=null;paint()}});
+  cv.addEventListener('click',e=>{if(e.defaultPrevented)return;const h=hitAt(e);if(!h||!h.loc||h.skip)return;detail(h.loc);if(cat().dc&&SC.scope==='county'){scopeLabel();draw()}});
+  new ResizeObserver(()=>{if(!MAP.vb)return;if(MAP.metro)draw();else{size();paint()}}).observe(el);
+  size();
 }
-function highlight(){const gd=$('map'),i=(gd.data||[]).findIndex(t=>t.name==='sel');if(i>=0)Plotly.restyle(gd,{locations:[[S.sel||'']]},[i])}
+function size(){const el=$('map'),d=devicePixelRatio||1;MAP.W=el.clientWidth||900;MAP.H=el.clientHeight||500;MAP.d=d;MAP.cv.width=Math.round(MAP.W*d);MAP.cv.height=Math.round(MAP.H*d)}
+function view(){  // map frame -> CSS pixels: fit the frame, then apply pan/zoom
+  const pad=innerWidth<700?6:14,s=Math.min((MAP.W-2*pad)/MAP.vb[0],(MAP.H-2*pad)/MAP.vb[1]),ox=(MAP.W-MAP.vb[0]*s)/2,oy=(MAP.H-MAP.vb[1]*s)/2,t=MAP.t;
+  return {a:t.k*s,x:t.k*ox+t.x,y:t.k*oy+t.y};
+}
+function paint(){if(MAP.ctx&&!MAP.raf)MAP.raf=requestAnimationFrame(paintNow)}
+function paintNow(){
+  MAP.raf=0;const c=MAP.ctx,d=MAP.d,v=view(),px=1/v.a,dark=matchMedia('(prefers-color-scheme:dark)').matches;
+  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,MAP.cv.width,MAP.cv.height);
+  c.setTransform(d*v.a,0,0,d*v.a,d*v.x,d*v.y);c.lineJoin='round';
+  for(const L of MAP.layers){
+    c.globalAlpha=L.op;for(const it of L.items)if(it.on&&it.fill){c.fillStyle=it.fill;c.fill(it.sh.p)}
+    c.globalAlpha=1;if(L.lw){c.lineWidth=L.lw*px;c.strokeStyle=L.stroke;for(const it of L.items)if(it.on)c.stroke(it.sh.p)}
+  }
+  if(MAP.hov&&MAP.hov.sh){c.lineWidth=1.5*px;c.strokeStyle=dark?'#e8ecf2':'#1d2430';c.stroke(MAP.hov.sh.p)}
+  c.setTransform(d,0,0,d,0,0);
+  for(const q of MAP.pts){const x=q.x*v.a+v.x,y=q.y*v.a+v.y;if(x<-10||y<-10||x>MAP.W+10||y>MAP.H+10)continue;
+    c.beginPath();if(q.sym==='diamond'){const r=q.r*1.3;c.moveTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.lineTo(x-r,y);c.closePath()}else c.arc(x,y,q.r,0,7);
+    c.globalAlpha=q.op;c.fillStyle=q.fill;c.fill();c.globalAlpha=1;if(q.lw){c.lineWidth=q.lw;c.strokeStyle=q.stroke;c.stroke()}}
+}
+function hitAt(e){
+  const r=MAP.cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,v=view();
+  for(let i=MAP.pts.length-1;i>=0;i--){const q=MAP.pts[i],dx=q.x*v.a+v.x-mx,dy=q.y*v.a+v.y-my;if(dx*dx+dy*dy<=(q.r+2)**2)return q}
+  const x=(mx-v.x)/v.a,y=(my-v.y)/v.a;
+  for(let li=MAP.layers.length-1;li>=0;li--){const L=MAP.layers[li];if(L.outline)continue;
+    for(const it of L.items){const b=it.sh.bb;if(!it.on||x<b[0]||x>b[2]||y<b[1]||y>b[3])continue;if(MAP.hit.isPointInPath(it.sh.p,x,y))return it}}
+  return null;
+}
+function rewind(fc){  // d3 reads ring direction spherically: a counter-clockwise hexagon means "the whole Earth except it"
+  if(fc.__rw)return fc;const out={type:'FeatureCollection',features:fc.features.map(f=>d3.geoArea(f)>2*Math.PI?{...f,geometry:{...f.geometry,coordinates:
+    f.geometry.type==='Polygon'?f.geometry.coordinates.map(r=>[...r].reverse()):f.geometry.coordinates.map(p=>p.map(r=>[...r].reverse()))}}:f)};
+  out.__rw=1;fc.__rw_out=out;return out}
+const wound=fc=>fc.__rw_out||rewind(fc);
+function bbox(d){const n=d.match(/-?[\d.]+/g).map(Number);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let i=0;i<n.length;i+=2){const x=n[i],y=n[i+1];if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}return [x0,y0,x1,y1]}
+function shapesFor(geojson){  // Path2D per feature, built once per geography
+  let c=MAP.shapes.get(geojson);if(c&&c.key===MAP.key)return c.list;
+  const list=[],add=(id,d,bb)=>{if(d)list.push({id:String(id),p:new Path2D(d),bb:bb||bbox(d)})};
+  if(geojson.us)Object.entries(PATH).forEach(([id,v])=>add(id,v[0],v.slice(1)));
+  else if(geojson.sel)geojson.ids.forEach(id=>add(id,PATH[id][0],PATH[id].slice(1)));
+  else{const path=d3.geoPath(MAP.proj);wound(geojson).features.forEach(f=>add(f.id,path(f)))}
+  MAP.shapes.set(geojson,{key:MAP.key,list});return list;
+}
+function render(traces,note,geoX){
+  const dark=matchMedia('(prefers-color-scheme:dark)').matches,land=dark?'#2a2f38':'#e5e7eb',line=dark?'#3a414c':'#b8bcc4';
+  if(!MAP.cv)mapSetup();
+  if(!geoX)traces.push({type:'choropleth',name:'sel',geojson:selGeo(),locations:S.sel?[S.sel]:[],z:[0],showscale:false,hoverinfo:'skip',outline:true});  // selected county
+  syncLens();
+  const key=geoX?'metro:'+$('metrosel').value+'|'+MAP.W+'x'+MAP.H:'us';
+  if(MAP.key!==key){size();MAP.key=key;MAP.metro=!!geoX;
+    if(geoX){const hex=traces.filter(t=>t.type==='choropleth').at(-1);MAP.vb=[MAP.W,MAP.H];MAP.proj=d3.geoMercator().precision(0).fitExtent([[10,10],[MAP.W-10,MAP.H-20]],wound(hex.geojson))}
+    else{MAP.vb=[960,500];MAP.proj=d3.geoAlbersUsa().scale(1070).translate([480,250])}  // the frame the outlines were built in
+    MAP.t=d3.zoomIdentity;MAP.sel.call(MAP.zoom.transform,d3.zoomIdentity)}
+  let cbar=null;MAP.hov=null;
+  MAP.layers=traces.filter(t=>t.type==='choropleth').map((t,ti)=>{
+    const z=t.z||[],col=t.outline?()=>null:colorFn(t.colorscale||SEQ,t.zmin??0,t.zmax??1),idx=new Map((t.locations||[]).map((l,i)=>[String(l),i]));
+    const transparent=t.outline||Array.isArray(t.colorscale)&&String(t.colorscale[0][1]).includes('rgba(0,0,0,0)');
+    if(t.colorbar&&t.showscale!==false&&!cbar)cbar=t;
+    return {outline:!!t.outline,op:t.marker?.opacity??1,stroke:t.outline?(dark?'#fff':'#111'):t.marker?.line?.color||line,lw:t.outline?2.5:(t.marker?.line?.width??.3)+.2,
+      items:shapesFor(t.geojson).map(sh=>{const i=idx.get(sh.id);if(i==null)return {sh,on:false};
+        return {sh,on:true,fill:transparent?null:col(z[i])||land,tr:t.hoverinfo==='skip'?null:t,i,loc:sh.id,skip:(cat().metro&&ti===0)}})};
+  });
+  MAP.pts=[];traces.filter(t=>t.type==='scattergeo').forEach(t=>{const m=t.marker||{},arr=(v,i)=>Array.isArray(v)?v[i]:v;
+    for(let i=0;i<t.lat.length;i++){const xy=MAP.proj([t.lon[i],t.lat[i]]);if(!xy)continue;
+      MAP.pts.push({x:xy[0],y:xy[1],r:(arr(m.size,i)||6)/2,sym:m.symbol,fill:arr(m.color,i)||'#f59e0b',op:m.opacity??1,stroke:m.line?.color||'#fff',lw:m.line?.width??.6,tr:t,i,loc:t.customdata?t.customdata[i]:null})}});
+  paint();
+  // color legend
+  let cb=$('map').querySelector('.cbar');if(!cb){cb=document.createElement('div');cb.className='cbar';$('map').appendChild(cb)}
+  if(cbar){const cs=NAMED[cbar.colorscale]||cbar.colorscale,zmin=cbar.zmin??0,zmax=cbar.zmax??1,o=cbar.colorbar,f=tickFmt(o.tickformat);
+    const tv=o.tickvals||d3.range(5).map(i=>zmin+i*(zmax-zmin)/4),tt=o.ticktext||tv.map(f);
+    cb.hidden=false;cb.innerHTML=`<div>${typeof o.title==='string'?o.title:o.title?.text||''}</div><div class="g" style="background:linear-gradient(90deg,${cs.map(c=>`${c[1]} ${c[0]*100}%`).join(',')})"></div><div class="tk">${tt.map(x=>`<span>${x}</span>`).join('')}</div>`}
+  else cb.hidden=true;
+  $('map').data=traces;
+  let nt=$('mapnote');if(!nt){nt=document.createElement('div');nt.id='mapnote';$('map').parentNode.insertBefore(nt,$('map'))}nt.innerHTML=note;
+}
+function highlight(){const L=MAP.layers.find(l=>l.outline),t=($('map').data||[]).find(t=>t.name==='sel');if(!L||!t)return;
+  t.geojson=selGeo();t.locations=S.sel?[S.sel]:[];L.items=shapesFor(t.geojson).map(sh=>({sh,on:true}));paint()}
+// test/automation hooks: visible shapes and a screen point inside one
+MAP.ids=(li)=>{const L=li==null?MAP.layers.filter(l=>!l.outline):[MAP.layers.at(li)];return L.flatMap(l=>l.items.filter(i=>i.on).map(i=>i.sh.id))};
+MAP.count=()=>MAP.ids().length;
+function mapPoint(id){
+  const it=MAP.layers.filter(l=>!l.outline).flatMap(l=>l.items).find(i=>i.on&&i.sh.id===String(id));if(!it)return null;
+  const b=it.sh.bb,v=view(),r=MAP.cv.getBoundingClientRect();
+  for(let gx=1;gx<10;gx++)for(let gy=1;gy<10;gy++){const x=b[0]+(b[2]-b[0])*((gx*5)%10)/10,y=b[1]+(b[3]-b[1])*((gy*3)%10)/10;
+    if(MAP.hit.isPointInPath(it.sh.p,x,y)){const cx=r.left+x*v.a+v.x,cy=r.top+y*v.a+v.y;if(hitAt({clientX:cx,clientY:cy})?.loc===String(id))return [cx,cy]}}
+  return null;
+}
 /* ---------- data center propensity ---------- */
 const DM=D.dcm,DI=Object.fromEntries(DM.fips.map((f,i)=>[f,i]));
 const PY=Math.max(...D.projects.map(p=>p.year)),LIVE=p=>!(p.status&&/cancel|block|withdr|denied/i.test(p.status));
@@ -297,7 +410,7 @@ function drawDC(op){
   const v=$('view').value,z=dcValues();
   const cfg={like:{cs:SEQ,zmin:0,zmax:.8,t:'Likelihood',tf:'.0%'},pct:{cs:SEQ,zmin:50,zmax:100,t:'Percentile'},white:{cs:[[0,'#f59e0b'],[1,'#f59e0b']],zmin:0,zmax:1,t:''},
     count:{cs:HEAT,zmin:0,zmax:2.4,t:'Data centers',tv:[0,.48,1,1.7,2.4],tt:['0','2','9','50','250']},dctrend:{cs:HEAT,zmin:0,zmax:6,t:'New projects'},disagree:{cs:'Purples',zmin:0,zmax:.25,t:'Model spread',tf:'.0%'}}[v];
-  const text=DM.fips.map((f,i)=>`<b>${cname(f)}</b><br>Projects announced ${PY-1}-${PY}: ${RECENT[f]||0}<br>Existing sites (OSM): ${DM.n_dc[i]}<br>Likelihood of hosting a data center: ${(DM.like[i]/10).toFixed(0)}%<br>Percentile: ${(DM.pct[i]/10).toFixed(0)}${DM.epoch[i]?'<br>Epoch frontier campuses: '+DM.epoch[i]:''}${DM.ws[i]?'<br><b>White space</b>':''}`);
+  const text=lazy(DM.fips,(f,i)=>`<b>${cname(f)}</b><br>Projects announced ${PY-1}-${PY}: ${RECENT[f]||0}<br>Existing sites (OSM): ${DM.n_dc[i]}<br>Likelihood of hosting a data center: ${(DM.like[i]/10).toFixed(0)}%<br>Percentile: ${(DM.pct[i]/10).toFixed(0)}${DM.epoch[i]?'<br>Epoch frontier campuses: '+DM.epoch[i]:''}${DM.ws[i]?'<br><b>White space</b>':''}`);
   const tr=[{type:'choropleth',geojson:GEO,locations:DM.fips,z,text,hoverinfo:'text',colorscale:cfg.cs,zmin:cfg.zmin,zmax:cfg.zmax,marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:{title:cfg.t,len:.55,tickformat:cfg.tf,tickvals:cfg.tv,ticktext:cfg.tt}}];
   if($('dc').checked)tr.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#2dd4bf',line:{width:.5,color:'#fff'}}});
   if($('epoch').checked){const m=dcMarkers();if(m)tr.push(m)}
@@ -365,9 +478,6 @@ function panelDC(){
       <p class="small mut"><b>The "siting score" views</b> are a separate, simpler model: how much a county resembles places that already have data centers (from OpenStreetMap). It has no sense of timing; use it to spot look-alike counties, not to predict when something gets built.</p>`;
   }
 }
-function attachClick(){$('map').on('plotly_click',e=>{const p=e.points[0];if(!p)return;const loc=p.location||(typeof p.customdata==='string'?p.customdata:null);  // project diamonds carry their county
-  if(!loc)return;if(cat().metro&&p.curveNumber===0)return;detail(loc);
-  if(cat().dc&&SC.scope==='county'){scopeLabel();draw()}})}
 function projTrace(upto){const P=upto?D.projects.filter(p=>p.year<=upto):D.projects;if(!P.length)return null;return {type:'scattergeo',customdata:P.map(p=>p.fips),lat:P.map(p=>p.lat),lon:P.map(p=>p.lon),mode:'markers',hoverinfo:'text',
   text:P.map(p=>`<b>${p.name||'project'}</b><br>${p.operator||''}<br>${p.type}, ${p.year}${p.mw?', '+Math.round(p.mw)+' MW':''}${p.status?'<br>'+p.status:''}<br>${cname(p.fips)}`),marker:{size:6,symbol:'diamond',color:P.map(p=>p.status&&/cancel|block|withdr|denied/i.test(p.status)?'#9ca3af':'#dc2626'),line:{width:.6,color:'#fff'}}}}
 /* ---------- metro H3 cells ---------- */
@@ -381,10 +491,10 @@ function drawMetro(op){
   const z=r.v==='prob'?r.prob:r.v==='actual'?r.actual:r.v==='mtrend'?r.f.hist.map(h=>h[0]-(h[1]+h[2])/2):r.f.hist.map(h=>h[0]+h[1]+h[2]);
   const cfg={prob:{cs:SEQ,zmin:0,zmax:.8,t:'Probability',tf:'.0%'},actual:{cs:[[0,'#e5e7eb'],[1,'#08306b']],zmin:0,zmax:1,t:'Permit filed'},hist:{cs:HEAT,zmin:0,zmax:6,t:'Permits (3 yrs)'},mtrend:{cs:DIV,zmin:-3,zmax:3,zmid:0,t:'Change'}}[r.v];
   const ml=['xgboost','lightgbm','random_forest'];
-  const text=r.cells.map((c,i)=>{const a=ml.map(k=>r.probs[k][i]/10);let s=`<b>Cell ${c.slice(0,9)}…</b><br>Probability: ${(r.prob[i]*100).toFixed(0)}% (models ${Math.min(...a).toFixed(0)}-${Math.max(...a).toFixed(0)}%)`;
+  const text=lazy(r.cells,(c,i)=>{const a=ml.map(k=>r.probs[k][i]/10);let s=`<b>Cell ${c.slice(0,9)}…</b><br>Probability: ${(r.prob[i]*100).toFixed(0)}% (models ${Math.min(...a).toFixed(0)}-${Math.max(...a).toFixed(0)}%)`;
     if(r.f)s+=`<br>Permits last 3 yrs: ${r.f.hist[i].join(' / ')} (${r.origin}/${r.origin-1}/${r.origin-2})`;if(r.actual)s+=`<br>Actual ${r.ty}: ${r.actual[i]?'permit filed':'none'}`;return s});
   const dark=matchMedia('(prefers-color-scheme:dark)').matches;
-  const tr=[{type:'choropleth',geojson:GEO,locations:M.counties,z:M.counties.map(()=>0),colorscale:[[0,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,0)']],showscale:false,hoverinfo:'skip',marker:{line:{width:1,color:dark?'#667085':'#98a2b3'}}},
+  const tr=[{type:'choropleth',geojson:M.county_geo,locations:M.counties,z:M.counties.map(()=>0),colorscale:[[0,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,0)']],showscale:false,hoverinfo:'skip',marker:{line:{width:1,color:dark?'#667085':'#98a2b3'}}},
     {type:'choropleth',geojson:M.geojson,locations:r.cells,z,text,hoverinfo:'text',colorscale:cfg.cs,zmin:cfg.zmin,zmax:cfg.zmax,zmid:cfg.zmid,marker:{opacity:op,line:{width:.3,color:'#999'}},colorbar:{title:cfg.t,len:.55,tickformat:cfg.tf}}];
   const lg=S.mode==='forecast'?`Forecast for ${r.ty} from permits through ${r.origin}`:`Backtest: predicted ${r.ty} from permits through ${r.origin} (out-of-sample ${r.split} period)`;
   $('legend').innerHTML=`${lg} &middot; ${M.label}`+($('metrosel').value==='mecklenburg'&&S.mode==='forecast'?' &middot; <b>2025 permits look incomplete for Mecklenburg, so this forecast starts from 2024</b>':'');
@@ -463,7 +573,7 @@ function dctData(){
 }
 function drawDCT(op){
   const r=dctData(),vw=$('view').value,act=vw==='actual_timed',sc=['scen','scen_diff'].includes(vw)&&!r.bt?scenProb():null,z=sc?(vw==='scen'?sc.scen:sc.scen.map((v,i)=>(v-sc.base[i])*100)):act?r.y:r.prob,PI=Object.fromEntries(D.dct.fips.map((f,i)=>[f,D.dct.proj_cum[i]]));
-  const text=r.fips.map((f,i)=>`<b>${cname(f)}</b><br>Chance of a new data center project in ${r.year}: ${(r.prob[i]*100).toFixed(0)}%${sc?` &rarr; scenario ${(sc.scen[i]*100).toFixed(0)}% (${((sc.scen[i]-sc.base[i])*100>=0?'+':'')}${((sc.scen[i]-sc.base[i])*100).toFixed(1)} pp)`:''}${r.bt?'<br>Actual: '+(r.y[i]?'new project':'none'):''}<br>Earlier known projects: ${D.projects.filter(p=>p.fips===f&&p.year<r.year).length}`);
+  const text=lazy(r.fips,(f,i)=>`<b>${cname(f)}</b><br>Chance of a new data center project in ${r.year}: ${(r.prob[i]*100).toFixed(0)}%${sc?` &rarr; scenario ${(sc.scen[i]*100).toFixed(0)}% (${((sc.scen[i]-sc.base[i])*100>=0?'+':'')}${((sc.scen[i]-sc.base[i])*100).toFixed(1)} pp)`:''}${r.bt?'<br>Actual: '+(r.y[i]?'new project':'none'):''}<br>Earlier known projects: ${D.projects.filter(p=>p.fips===f&&p.year<r.year).length}`);
   const tr=[{type:'choropleth',geojson:GEO,locations:r.fips,z,text,hoverinfo:'text',colorscale:vw==='scen_diff'?DIV:act?[[0,'#e5e7eb'],[1,'#08306b']]:SEQ,zmin:vw==='scen_diff'?-10:0,zmax:vw==='scen_diff'?10:act?1:.6,zmid:vw==='scen_diff'?0:undefined,marker:{opacity:op,line:{width:.2,color:'#999'}},colorbar:{title:vw==='scen_diff'?'Change (points)':act?'New project':'Chance',len:.55,tickformat:vw==='scen_diff'||act?undefined:'.0%'}}];
   if($('proj').checked){const pt=projTrace(r.bt?r.year:null);if(pt)tr.push(pt)}
   if($('dc').checked)tr.push({type:'scattergeo',lat:D.dc.lat,lon:D.dc.lon,text:D.dc.text,hoverinfo:'text',mode:'markers',marker:{size:4,color:'#2dd4bf',line:{width:.5,color:'#fff'}}});
@@ -496,12 +606,15 @@ function detail(f){
     [`${r.label} in ${r.origin+r.h}`,(r.prob[i]*100).toFixed(0)+'%',`typical county: ${base}% &middot; models range ${(r.lo[i]*100).toFixed(0)}-${(r.hi[i]*100).toFixed(0)}%`],
     ['Expected change',`${r.gr[i]>=0?'+':''}${(r.gr[i]*100).toFixed(0)}%`,'vs its 3-year average'],
     S.mode==='backtest'&&['What actually happened',r.src.top&&r.src.top[i]?'top-10% increase':r.src.boom[i]?'25%+ spike':'no surge',`growth ${(Math.expm1(r.src.growth[i]/100)*100).toFixed(0)}%`]]);
-  h+='<div id="spark" style="height:110px"></div>';
+  if(hv.length)h+=sparkSVG(Y,hv,t.unit);
   if(S.mode==='forecast'&&r.src.drivers&&r.src.drivers[i])h+=`<h4>What drives this forecast</h4><div class="small">`+drivers(r.src.drivers[i])+'</div>';
   const pj=D.projects.filter(p=>p.fips===f);if(pj.length)h+=`<h4>Data center projects here (${pj.length})</h4><div class="small">`+pj.sort((a,b)=>b.year-a.year).slice(0,5).map(p=>`${p.year}: ${p.name}${p.mw?' ('+Math.round(p.mw)+' MW)':''}`).join('<br>')+(pj.length>5?`<br><span class="mut">and ${pj.length-5} more</span>`:'')+'</div>';
   $('detail').innerHTML=h;
-  if(hv.length){const dark=matchMedia('(prefers-color-scheme:dark)').matches;
-    Plotly.newPlot('spark',[{x:Y,y:hv,type:'bar',hovertemplate:'%{x}: %{y:,}<extra></extra>',marker:{color:Y.map(y=>y===Y[n-1]?'#f16913':'#9db4dc')}}],{margin:{l:40,r:4,t:4,b:20},height:110,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:10,color:dark?'#e8ecf2':'#1d2430'},yaxis:{title:{text:t.unit,font:{size:10}}}},{displayModeBar:false});}
+}
+function sparkSVG(Y,v,unit){  // small bar chart of the county's history; latest year highlighted
+  const W=240,H=90,mx=Math.max(1,...v.map(x=>x||0)),bw=W/v.length;
+  const bars=v.map((x,i)=>x==null?'':`<rect x="${(i*bw).toFixed(1)}" y="${(H-(x/mx)*H).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${((x/mx)*H).toFixed(1)}" fill="${i===v.length-1?'#f16913':'#9db4dc'}"><title>${Y[i]}: ${fmt.format(x)}</title></rect>`).join('');
+  return `<div class="small mut" style="margin-top:8px">${unit} per year, ${Y[0]}-${Y[Y.length-1]} (peak ${fmt.format(mx)})</div><svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="${unit} per year">${bars}</svg>`;
 }
 function avgBoom(r){return r.src.boom.reduce((a,b)=>a+b,0)/r.src.boom.length}
 $('map').addEventListener('plotly_click',()=>{});
@@ -519,7 +632,9 @@ function wfTable(t,h){
   return `<p class="small" style="margin-top:12px"><b>Top-10% target, retrained every year (walk-forward)</b> &middot; test years ${W[0].test_years} &middot; the old one-time-trained ensemble scored ${(+W[0].fixed_split_ensemble_pr_auc).toFixed(3)} PR-AUC</p><div class="tw"><table><tr><th>Model</th><th>PR-AUC</th><th>Precision@100</th></tr>`+
     rows.map(x=>`<tr class="${x.model==='ensemble_wf'?'best':''}"><td>${nm[x.model]||x.model}${x.gnn?' <span class="mut">(graph experiment)</span>':''}</td><td>${(+x.test_pr_auc).toFixed(3)}</td><td>${(+x.test_p_at_100).toFixed(2)}</td></tr>`).join('')+'</table></div>';
 }
+const APP=document.querySelector('.app'),statsOpen=()=>APP.dataset.page==='stats';
 function panel(r){
+  if(!statsOpen())return;
   if(cat().dc){tabs();panelDC();return}
   if(cat().metro){tabs();panelMetro();return}
   const el=$('panel');if(!r){el.innerHTML='<span class="mut">Select a category with a trained model to see analysis.</span>';return}
@@ -541,10 +656,9 @@ function panel(r){
   }else if(S.tab==='feat'){
     const imp=S.mode==='forecast'&&r.src.importance?Object.entries(r.src.importance).sort((a,b)=>b[1]-a[1]):[];
     const ab=M.filter(x=>x.task==='ablation'&&x.model==='xgboost').sort((a,b)=>a.features.length-b.features.length);const abt=M.filter(x=>x.task==='ablation_top');
-    el.innerHTML=(imp.length?`<b>XGBoost feature importance (gain, top-10% model)</b><div id="imp" style="height:230px"></div>`:'<p class="small mut">Switch to Forecast mode for feature importance.</p>')+
+    el.innerHTML=(imp.length?`<b>What the top-10% model relies on most</b>${impBars(r.src.importance,10)}<br>`:'<p class="small mut">Switch to Forecast mode for feature importance.</p>')+
       `<b>Do extra features help? (XGBoost, held-out test)</b><div class="tw"><table><tr><th>Feature set</th><th>Growth MAE</th><th>Boom PR-AUC</th></tr>`+ab.map(x=>`<tr><td>${x.features}</td><td>${x.reg_mae.toFixed(3)}</td><td>${x.clf_pr_auc.toFixed(3)}</td></tr>`).join('')+`</table></div>
       <b>Context features for the top-10% target (XGBoost)</b><div class="tw"><table><tr><th>Feature set</th><th>Validation PR-AUC (used to choose)</th><th>Test PR-AUC</th></tr>`+abt.map(x=>`<tr><td>${x.features}</td><td>${(+x.val_pr_auc).toFixed(3)}</td><td>${(+x.top_pr_auc).toFixed(3)}</td></tr>`).join('')+`</table></div><p class="small mut">context = political lean (latest presidential election before the forecast year), distance to interstates and rail, farmland value, effective property tax rate, no-state-wage-tax flag and FEMA disaster risk. own = county's own history; spatial = neighbouring counties, state trend, location; econ = wages/establishments (jobs) or multifamily share/value (permits). demo = ACS population, income, home value and growth (only vintages already public at the forecast origin; unavailable before 2012, so it can't help permits).</p>`;
-    if(imp.length){const dark=matchMedia('(prefers-color-scheme:dark)').matches;Plotly.newPlot('imp',[{type:'bar',orientation:'h',x:imp.map(x=>x[1]).reverse(),y:imp.map(x=>x[0]).reverse(),marker:{color:'#6b8cce'}}],{margin:{l:90,r:10,t:4,b:24},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:11,color:dark?'#e8ecf2':'#1d2430'}},{displayModeBar:false})}
   }else{
     const G=D.geo_holdout.filter(x=>x.target===t),byM={};G.forEach(x=>{(byM[x.model]??={s:[],o:[],p:[]});byM[x.model].s.push(x.mae_standard);byM[x.model].o.push(x.mae_heldout_region);byM[x.model].p.push(x.mae_persistence)});
     const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
@@ -572,6 +686,12 @@ function nextTop(target){  // same "surge" score the map shows: top-10% increase
 }
 function impBars(imp,k=6){const e=Object.entries(imp||{}).sort((a,b)=>b[1]-a[1]).slice(0,k),mx=e.length?e[0][1]:1;
   return '<div class="imp">'+e.map(([f,v])=>`<span>${FEAT[f]||f}</span><i style="width:${Math.max(4,v/mx*100)}%"></i>`).join('')+'</div>'}
+function yearBars(byY,PY){  // projects per year, current partial year lighter
+  const yrs=Object.keys(byY).map(Number).filter(y=>y>=2018).sort(),mx=Math.max(...yrs.map(y=>byY[y])),W=520,H=190,bw=W/yrs.length;
+  return `<svg viewBox="0 0 ${W} ${H+34}" width="100%" role="img" aria-label="Projects announced per year">`+yrs.map((y,i)=>{const h=byY[y]/mx*H,x=i*bw+4;
+    return `<rect x="${x}" y="${H-h+14}" width="${bw-8}" height="${h}" rx="3" fill="${y===PY?'#b4c6e7':'#2a78d6'}"><title>${y}: ${byY[y]} projects</title></rect>`+
+      `<text x="${x+(bw-8)/2}" y="${H-h+10}" text-anchor="middle" font-size="12" fill="currentColor">${byY[y]}${y===PY?' so far':''}</text><text x="${x+(bw-8)/2}" y="${H+30}" text-anchor="middle" font-size="12" fill="currentColor" opacity=".7">${y}</text>`}).join('')+'</svg>';
+}
 function buildInsights(){
   const tile=(k,v,s)=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
   const live=D.projects.filter(LIVE),byY={},cty={};live.forEach(p=>{byY[p.year]=(byY[p.year]||0)+1;(cty[p.year]??=new Set()).add(p.fips)});
@@ -582,7 +702,7 @@ function buildInsights(){
     tile(`${PY} so far`,fmt.format(byY[PY]||0),`in ${(cty[PY]||new Set()).size} counties`+(months<12?` &middot; on pace for about ${fmt.format(pace)}`:''))+
     (prev?tile(`Raw model count for ${prev.year}`,`${Math.round(prev.expected_counties)} counties`,`made from ${prev.year-1} data &middot; already ${(cty[prev.year]||new Set()).size} counties so far, so the raw count under-shoots the boom`):'')+
     tile(`Expected in ${D.dct.year}`,`~${Math.round(exp)} counties`,`roughly ${fmt.format(Math.round(exp*ratio))} projects, if ${D.dct.year} is as busy as ${DC_LAST}. The model picks <b>where</b>; the total follows the latest year`)+
-    `</div><div class="cols" style="margin-top:14px"><div><b>Projects announced per year</b><div id="insbar" style="height:220px"></div></div><div><b>Most likely to get a new project in ${D.dct.year}</b><div class="tw"><table class="rank"><tr><th>County</th><th>Chance</th><th>Projects so far</th></tr>`+
+    `</div><div class="cols" style="margin-top:14px"><div><b>Projects announced per year</b>${yearBars(byY,PY)}</div><div><b>Most likely to get a new project in ${D.dct.year}</b><div class="tw"><table class="rank"><tr><th>County</th><th>Chance</th><th>Projects so far</th></tr>`+
     D.dct.fips.map((f,i)=>[f,D.dct.prob[i]/1000,D.dct.proj_cum[i]]).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([f,p,c])=>`<tr><td>${clink(f,'dc')}</td><td>${(p*100).toFixed(0)}%</td><td>${c}</td></tr>`).join('')+'</table></div></div></div>';
   const st={};live.filter(p=>p.year>=PY-1).forEach(p=>{const s=ST[p.fips.slice(0,2)];if(s)st[s]=(st[s]||0)+1});
   h+=`<p class="small" style="margin-top:8px"><b>Busiest states, ${PY-1}-${PY}:</b> `+Object.entries(st).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([s,n])=>`${s} (${n})`).join(', ')+'</p>';
@@ -600,16 +720,14 @@ function buildInsights(){
     `<div><b>New data center projects</b>${impBars(D.dct.importance)}</div><div><b>Housing surges</b>${impBars(fi('residential_permits'))}</div><div><b>Construction job surges</b>${impBars(fi('all_construction'))}</div></div>`+
     `<p class="small mut" style="margin-top:18px">"Surge" means a county lands in the top 10% for growth or jumps 25%+ above its own 3-year average. See <a href="#" data-page="stats">How accurate?</a> for how often the forecasts were right on past years.</p>`;
   $('insights').innerHTML=h;
-  const yrs=Object.keys(byY).map(Number).filter(y=>y>=2018).sort(),dark=matchMedia('(prefers-color-scheme:dark)').matches;
-  Plotly.newPlot('insbar',[{type:'bar',x:yrs.map(String),y:yrs.map(y=>byY[y]),marker:{color:yrs.map(y=>y===PY?(dark?'#5b6b85':'#b4c6e7'):'#2a78d6')},text:yrs.map(y=>y===PY?'so far':''),textposition:'outside',hovertemplate:'%{x}: %{y} projects<extra></extra>'}],
-    {margin:{l:36,r:8,t:16,b:24},height:220,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{size:11,color:dark?'#e8ecf2':'#1d2430'},yaxis:{gridcolor:dark?'#2a313c':'#e4e7ec'}},{displayModeBar:false,responsive:true});
 }
 function showPage(p){
   document.querySelector('.app').dataset.page=p;$('pages').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   if(p==='insights'&&!S.ins){buildInsights();S.ins=1}
   if(p==='stats')$('cat2').value=CATS.some(c=>c.id===$('cat').value&&(c.target||c.dc||c.metro))?$('cat').value:'all';
   if(p==='stats'&&$('cat2').value!==$('cat').value){$('cat').value=$('cat2').value;$('cat').dispatchEvent(new Event('input'))}
-  if(p==='map')Plotly.Plots.resize('map');
+  if(p==='stats'){tabs();panel(T()?resolve():null)}
+  if(p==='map'){size();draw()}
   scrollTo(0,0);
 }
 $('pages').querySelectorAll('button').forEach(b=>b.onclick=()=>showPage(b.dataset.p));
@@ -621,9 +739,9 @@ $('insights').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)r
   if($('cat').value!==a.dataset.c){$('cat').value=a.dataset.c;$('cat').dispatchEvent(new Event('input'))}
   showPage('map');detail(a.dataset.f)});
 /* ---------- wiring ---------- */
-$('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.mode=b.dataset.v;$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));refreshControls();draw()});
+$('mode').querySelectorAll('button').forEach(b=>b.onclick=async()=>{if(b.dataset.v==='backtest'&&!await loadBacktest()){$('legend').textContent='Checking past years needs the site served over the web (python serve.py or any host); it can\'t load from a file opened directly.';return}S.mode=b.dataset.v;$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));refreshControls();draw()});
 ['cat','metrosel','horizon','origin','model','view','opacity','dc','epoch','proj'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='cat'){$('proj').checked=!!cat().dc}  // project diamonds are data center projects: on by default only there
-  if(id==='cat'||id==='horizon'||id==='metrosel'||id==='origin'||(id==='view'&&cat().dc)){refreshControls()}if(id==='cat'||id==='metrosel')S.sel=null;if(id==='cat')tabs();draw();if(S.sel&&(T()||cat().dc||cat().metro))detail(S.sel)}));
+  if(id==='cat'||id==='horizon'||id==='metrosel'||id==='origin'||(id==='view'&&cat().dc)){refreshControls()}if(id==='cat'||id==='metrosel'){S.sel=null;$('detail').innerHTML='<span class="mut">Click a county on the map or search for one.</span>'}if(id==='cat')tabs();draw();if(S.sel&&(T()||cat().dc||cat().metro))detail(S.sel)}));
 // three lenses over the same map: each picks the first "Map shows" option of its kind
 $('lens').querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=[...$('view').options].map(o=>o.value).find(v=>LENS_OF(v)===b.dataset.v);
   if(!v)return;$('view').value=v;if(cat().dc)refreshControls();draw();if(S.sel&&(T()||cat().dc))detail(S.sel)});
@@ -633,15 +751,16 @@ $('countylist').innerHTML=Object.keys(BYNAME).sort().map(k=>`<option value="${cn
 $('search').addEventListener('change',e=>{const f=BYNAME[e.target.value.trim().toLowerCase()];if(!f||cat().metro)return;detail(f);if(innerWidth<980)$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})});
 tabs();
 // optional presets, e.g. #cat=dc  #cat=res&mode=backtest&origin=2020&h=2  #sel=51107&tab=feat
+(async()=>{
 const H=Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
 if(H.cat)$('cat').value=H.cat;if(H.metro)$('metrosel').value=H.metro;
-if(H.mode==='backtest'){S.mode='backtest';$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='backtest'))}
+if(H.mode==='backtest'&&await loadBacktest()){S.mode='backtest';$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='backtest'))}
 if(H.tab){S.tab=H.tab;tabs()}
 refreshControls();
 if(H.h)$('horizon').value=H.h;refreshControls();
 if(H.origin)$('origin').value=H.origin;if(H.view)$('view').value=H.view;if(H.model)$('model').value=H.model;if(H.dc)$('dc').checked=true;
 $('proj').checked=H.proj?H.proj!=='0':!!cat().dc;if(H.mode==='backtest'||H.h||H.model)$('adv').open=true;
 draw();if(H.sel&&(T()||cat().dc))detail(H.sel);
-// attach after first plot: Plotly adds .on to the div
+})();
 
 </script></body></html>

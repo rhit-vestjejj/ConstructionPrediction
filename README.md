@@ -11,8 +11,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python serve.py          # opens http://127.0.0.1:8000/forecast_app.html
 ```
 
-`outputs/forecast_app.html` is self-contained, so you can also open it directly. URL presets work, e.g.
+The site is `outputs/forecast_app.html` plus `outputs/forecast_backtest.json`. The JSON file holds past-year
+predictions and loads only when someone opens "Check past years". Opening the HTML file directly works for everything
+except that view, which needs the files served (`serve.py` or any static host). URL presets work, e.g.
 `forecast_app.html#cat=metro&metro=columbus` or `#cat=res&mode=backtest&origin=2019&sel=48201`.
+
+The map is drawn on a canvas from county outlines pre-projected at build time (`src/albers_usa.py`, d3's AlbersUsa
+frame), so a recolor, pan or zoom is a single repaint.
 
 ## Rebuild from scratch
 
@@ -36,12 +41,12 @@ A Census API key goes in `.env` as `CENSUS_API_KEY=...` (git-ignored). Then, fro
 | County model comparison | `forecasting.py` | `outputs/results/metrics.*`, `predictions.parquet` |
 | Data center propensity | `datacenter_model.py` | `data/datacenter_scores.parquet`, `outputs/results/datacenter_metrics.json` |
 | Metro H3 cell model | `metro_cells.py` | `outputs/results/metro_metrics.json`, `metro_predictions.parquet` |
-| App | `build_forecast_app.py` (`--template-only` re-renders from the cached payload in seconds) | `outputs/forecast_app.html` |
+| App | `build_forecast_app.py` (`--template-only` re-renders from the cached payload in seconds) | `outputs/forecast_app.html`, `outputs/forecast_backtest.json` |
 
 ## Test
 
 ```bash
-.venv/bin/python tests/e2e_app.py                                    # drives the built app in Chrome
+.venv/bin/python tests/e2e_app.py                                    # serves outputs/ and drives the app in Chrome
 .venv/bin/python tests/e2e_app.py http://127.0.0.1:8000/forecast_app.html
 ```
 

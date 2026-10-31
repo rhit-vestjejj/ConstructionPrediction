@@ -6,7 +6,14 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-URL = sys.argv[1] if len(sys.argv) > 1 else f"file://{ROOT}/outputs/forecast_app.html"
+if len(sys.argv) > 1:
+    URL = sys.argv[1]
+else:  # serve outputs/ over HTTP like a real host: past-year data is fetched on demand, which file:// can't do
+    import functools, http.server, threading
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / "outputs")))
+    srv.RequestHandlerClass.log_message = lambda *a: None
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    URL = f"http://127.0.0.1:{srv.server_address[1]}/forecast_app.html"
 SHOTS = ROOT / "outputs" / "e2e"
 SHOTS.mkdir(exist_ok=True, parents=True)
 fails, errs = [], []
@@ -24,8 +31,16 @@ with sync_playwright() as p:
     pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
     pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
     pg.goto(URL)
-    pg.wait_for_selector(".choroplethlayer path", timeout=30000)
-    n = lambda: pg.locator(".choroplethlayer path").count()
+    pg.wait_for_function("typeof MAP !== 'undefined' && MAP.count() > 0", timeout=30000)
+    n = lambda: pg.evaluate("MAP.count()")  # shapes drawn on the map canvas
+    pts = lambda: pg.evaluate("MAP.pts.length")  # markers drawn on the map canvas
+
+    def click_shape(layer=None):
+        """Real mouse click on a point inside a visible shape near the middle of the list."""
+        xy = pg.evaluate("(li)=>{const ids=MAP.ids(li);for(let k=0;k<ids.length;k++){const p=mapPoint(ids[(Math.floor(ids.length/2)+k)%ids.length]);if(p)return p}return null}", layer)
+        if xy:
+            pg.mouse.click(*xy)
+        return xy
     check("initial map renders", n() > 500, n())
     # ---- right now / heating up / next lenses and county search
     for lens, view in [("now", "now"), ("trend", "trend"), ("next", "surge")]:
@@ -51,7 +66,7 @@ with sync_playwright() as p:
 
     def counties_click():
         """Real mouse click on a county path near the middle of the map."""
-        pg.locator(".choroplethlayer path").nth(n() // 2).click(force=True)
+        click_shape()
         pg.wait_for_timeout(600)
         return pg.inner_text("#detail")
 
@@ -101,7 +116,7 @@ with sync_playwright() as p:
     pg.select_option("#cat", "dc")
     pg.wait_for_timeout(700)
     check("data center default view is the timed forecast", pg.input_value("#view") == "timed", pg.input_value("#view"))
-    pg.locator(".choroplethlayer path").nth(n() // 2).click(force=True)
+    click_shape()
     pg.wait_for_timeout(500)
     check("dc click shows new-project chance", "Chance of a new project in" in pg.inner_text("#detail"), pg.inner_text("#detail")[:80])
     pg.click('#mode button[data-v="backtest"]')
@@ -158,9 +173,9 @@ with sync_playwright() as p:
     for metro in ["fortworth", "mecklenburg", "columbus"]:
         pg.select_option("#metrosel", metro)
         pg.wait_for_timeout(900)
-        hexes = pg.locator(".choroplethlayer path").count()
+        hexes = pg.evaluate("MAP.ids(-1).length")
         check(f"metro {metro}: hexes drawn", hexes > 200, hexes)
-        pg.locator(".choroplethlayer path").nth(hexes // 2).click(force=True)  # county outlines are drawn first, hexes after
+        click_shape(-1)  # county outlines are the first layer, hexes the last
         pg.wait_for_timeout(500)
         txt = pg.inner_text("#detail")
         check(f"metro {metro}: hex click shows cell detail", "H3 cell" in txt and "Probability" in txt, txt[:80])
@@ -171,7 +186,7 @@ with sync_playwright() as p:
     for v in ["prob", "actual"]:
         pg.select_option("#view", v)
         pg.wait_for_timeout(500)
-        check(f"metro backtest view {v}", pg.locator(".choroplethlayer path").count() > 200)
+        check(f"metro backtest view {v}", pg.evaluate("MAP.ids(-1).length") > 200)
     for m in ["baseline_recent_history", "xgboost", "ensemble"]:
         pg.select_option("#model", m)
         pg.wait_for_timeout(400)
@@ -189,10 +204,10 @@ with sync_playwright() as p:
     pg.select_option("#cat", "all")
     pg.wait_for_timeout(700)
     check("default view is the surge view", pg.input_value("#view") == "surge", pg.input_value("#view"))
-    check("data center projects hidden outside data centers", pg.locator(".scattergeo .point").count() == 0, pg.locator(".scattergeo .point").count())
+    check("data center projects hidden outside data centers", pts() == 0, pts())
     pg.select_option("#cat", "dc")
     pg.wait_for_timeout(600)
-    check("announced projects layer drawn", pg.locator(".scattergeo .point").count() > 50, pg.locator(".scattergeo .point").count())
+    check("announced projects layer drawn", pts() > 50, pts())
     check("data center forecast is for next year", "2027" in pg.inner_text("#view"), pg.inner_text("#view")[:80])
     for lens, view in [("now", "count"), ("trend", "dctrend")]:
         pg.click(f'#lens button[data-v="{lens}"]')
@@ -200,7 +215,7 @@ with sync_playwright() as p:
         check(f"dc lens {lens}", pg.input_value("#view") == view and n() > 300, pg.input_value("#view"))
     pg.check("#dc")
     pg.wait_for_timeout(500)
-    check("OSM layer toggles", pg.locator(".scattergeo .point").count() > 100, pg.locator(".scattergeo .point").count())
+    check("OSM layer toggles", pts() > 100, pts())
     pg.screenshot(path=str(SHOTS / "dc.png"))
     pg.set_viewport_size({"width": 400, "height": 800})
     pg.wait_for_timeout(600)
