@@ -156,7 +156,7 @@ def metro_payload():
 
 
 def dc_timed_payload(payload):
-    """Timed data center forecast (dc_timed.py) + the 915-project layer (data_dc_projects.py). Probabilities via an
+    """Timed data center forecast (dc_timed.py) + the dated-project layer (data_dc_projects.py). Probabilities via an
     isotonic map fit on the walk-forward out-of-sample predictions (2021-2025)."""
     from sklearn.isotonic import IsotonicRegression
     dt_all = pd.read_parquet(ROOT / "data" / "dc_timed_forecast.parquet")
@@ -186,6 +186,10 @@ def dc_timed_payload(payload):
         payload["dcs"] = {**json.loads((RES / "dc_scenarios.json").read_text()), "capex": json.loads((RES / "capex_link.json").read_text())}
     payload["projects"] = [{"name": s(r.name), "operator": s(r.operator, 60), "fips": r.fips, "year": int(r.year), "type": "data center", "status": s(r.status, 30),
                             "mw": None if pd.isna(r.mw) else float(r.mw), "source": s(r.source, 300), "lat": float(cen.lat[r.fips]), "lon": float(cen.lon[r.fips])} for r in pj.itertuples()]
+    if (ROOT / "data" / "dcmap_counties.parquet").exists():  # outside snapshot (data_dcmap.py): context and a cross-check, not a model input
+        dm = pd.read_parquet(ROOT / "data" / "dcmap_counties.parquet")
+        payload["dcmap"] = {"as_of": dm.as_of.iloc[0], "rows": {r.fips: [int(r.operational), int(r.construction), int(r.planned), round(float(r.power_mw)), round(float(r.pipeline_mw)), r.url]
+                                                                for r in dm.itertuples()}}
 
 
 def main():

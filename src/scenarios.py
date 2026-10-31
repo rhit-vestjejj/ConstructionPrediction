@@ -44,6 +44,22 @@ def main():
     for key in ("0.2|0.0|0.0", "0.0|0.2|0.0", "0.0|0.0|1.0", "-0.2|-0.2|1.0"):
         v = np.array(out["delta"][key]) / 10
         print(f"elec|tax|dp = {key:14s} mean change {v.mean():+.2f} pp | counties up >1pp: {(v > 1).sum()} | down >1pp: {(v < -1).sum()} | max {v.max():+.1f} min {v.min():+.1f}")
+    capex_link()
+
+
+def capex_link(first=2017, last=dt.LAST_LABEL):
+    """National capex slider: log(counties with a new project) on log(hyperscaler capex, $bn), OLS over first..last.
+    capex_bn is carried over from the existing file (company filings); the county counts are recomputed from the projects."""
+    path = ROOT / "outputs" / "results" / "capex_link.json"
+    c = json.loads(path.read_text())
+    n = pd.read_parquet(ROOT / "data" / "dc_projects.parquet").groupby("year").fips.nunique()
+    yrs = list(range(first, last + 1))
+    x, y = np.log([c["capex_bn"][str(t)] for t in yrs]), np.log([n[t] for t in yrs])
+    (b, a), cov = np.polyfit(x, y, 1, cov="unscaled")
+    se = float(np.sqrt(cov[0, 0] * ((y - (a + b * x)) ** 2).sum() / (len(yrs) - 2)))
+    c.update(elasticity=float(b), se=se, years=[first, last], n=len(yrs), counties_with_new_project={str(t): int(n[t]) for t in n.index if 2015 <= t <= last})
+    path.write_text(json.dumps(c))
+    print(f"capex elasticity {b:.3f} (se {se:.3f}) over {first}-{last}")
 
 
 if __name__ == "__main__":

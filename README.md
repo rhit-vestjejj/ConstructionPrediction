@@ -41,7 +41,8 @@ A Census API key goes in `.env` as `CENSUS_API_KEY=...` (git-ignored). Then, fro
 | Metro permits | `data_permits_metro.py` | `data/raw/permits/*.parquet` |
 | Quarterly jobs (latest-quarter signal) | `data_qcew_quarterly.py` | `data/qcew_quarterly.parquet` |
 | Elections, roads/rail, land value | `data_context.py` | `data/elections.parquet`, `data/context_static.parquet` |
-| Data center projects (agent-compiled) | `data_dc_projects.py` | `data/dc_projects.parquet` |
+| County pipeline snapshot ([US Data Center Map](https://dcmap.us) agent API; context and cross-check only) | `data_dcmap.py [--refresh]` | `data/dcmap_counties.parquet` |
+| Data center projects (agent-compiled; `dc_news/dcmap_gaps/` fills counties the dcmap snapshot showed we were missing) | `data_dc_projects.py` | `data/dc_projects.parquet` |
 | Timed data center model | `dc_timed.py` | `outputs/results/dc_timed_*` |
 | Walk-forward / ranking / tuning | `walkforward.py [--reuse-configs]` | `outputs/results/walkforward_*` |
 | Graph models (separate arm64 env) | `.venv-gnn/bin/python src/gnn.py` | `outputs/results/gnn_*` |

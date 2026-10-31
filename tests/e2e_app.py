@@ -168,11 +168,17 @@ with sync_playwright() as p:
     pg.click("#s_reset")
     pg.wait_for_timeout(600)
     check("reset returns to baseline view", pg.input_value("#view") == "timed", pg.input_value("#view"))
+    pg.evaluate("detail('51107')")  # Loudoun County, VA: in the dcmap.us snapshot
+    pg.wait_for_timeout(300)
+    txt = pg.inner_text("#detail")
+    check("county detail shows the dcmap pipeline", "pipeline today" in txt.lower() and "under construction" in txt.lower() and "US Data Center Map" in txt, txt[-200:])
     pg.click('#pages button[data-p="stats"]')
     for tab in ["dctimed", "dcscen", "dcmodel", "emerging", "white", "pipeline", "dccaveats"]:
         pg.click(f'#tabs button[data-k="{tab}"]')
         pg.wait_for_timeout(400)
         check(f"dc tab {tab}", len(pg.inner_text("#panel")) > 40, pg.inner_text("#panel")[:50])
+        if tab == "dctimed":
+            check("accuracy page has the dcmap outside check", "Outside check" in pg.inner_text("#panel") and "in its top 50" in pg.inner_text("#panel"), pg.inner_text("#panel")[-200:])
     pg.click('#pages button[data-p="map"]')
     # ---- metro H3 cells
     pg.select_option("#cat", "metro")
