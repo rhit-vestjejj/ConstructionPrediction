@@ -42,6 +42,9 @@ with sync_playwright() as p:
             pg.mouse.click(*xy)
         return xy
     check("initial map renders", n() > 500, n())
+    check("opens on data centers", pg.input_value("#cat") == "dc" and pg.input_value("#view") == "timed" and pts() > 50, pg.input_value("#cat"))
+    pg.select_option("#cat", "res")
+    pg.wait_for_timeout(600)
     # ---- right now / heating up / next lenses and county search
     for lens, view in [("now", "now"), ("trend", "trend"), ("next", "surge")]:
         pg.click(f'#lens button[data-v="{lens}"]')

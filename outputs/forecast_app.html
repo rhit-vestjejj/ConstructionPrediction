@@ -160,7 +160,7 @@ const MODEL_NAMES={baseline_size:'Baseline: county size',baseline_recent_increas
 const S={mode:'forecast',tab:'compare',sel:null};
 CATS.forEach(c=>$('cat').add(new Option(c.label+(c.target||c.metro?'':c.dc?' (new-project forecast)':' (no forecast)'),c.id)));
 Object.entries(D.metro).forEach(([k,v])=>$('metrosel').add(new Option(v.label,k)));
-$('cat').value='res';
+$('cat').value='dc';  // opens on data centers
 
 function cat(){return CATS.find(c=>c.id===$('cat').value)}
 function T(){const c=cat();return c.target?D.targets[c.target]:null}
